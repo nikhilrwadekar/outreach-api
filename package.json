@@ -1,0 +1,40 @@
+{
+  "name": "outreach-api",
+  "version": "1.0.0",
+  "description": "The API that will serve data over Express JS and MongoDB to Outreach's React Native and React Web Dashboard",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://nikhilrwadekar@github.com/nikhilrwadekar/outreach-api.git"
+  },
+  "keywords": [
+    "express",
+    "mongodb",
+    "mongoose",
+    "oauth"
+  ],
+  "author": "Nikhil Wadekar",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nikhilrwadekar/outreach-api/issues"
+  },
+  "homepage": "https://github.com/nikhilrwadekar/outreach-api#readme",
+  "dependencies": {
+    "bluebird": "^3.7.2",
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-validation": "^2.0.0",
+    "mongoose": "^5.9.2",
+    "mongoose-error-handler": "^1.1.0",
+    "uuid": "^7.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.2"
+  }
+}
