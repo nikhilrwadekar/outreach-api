@@ -5,7 +5,7 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 // const errorHandler = require("../middlewares/error-handler");
-// const apiRouter = require("../routes/api");
+const apiRouter = require("../routes/api");
 
 // Make a new Express App
 const app = express();
@@ -13,7 +13,7 @@ app.use(bodyParser.json());
 app.use(cors());
 
 // API Routes
-// app.use("/api", apiRouter);
+app.use("/api", apiRouter);
 // app.use(errorHandler.handleNotFound);
 // app.use(errorHandler.handleError);
 
