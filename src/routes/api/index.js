@@ -1,8 +1,11 @@
 "use strict";
-
 const express = require("express");
+// Express Router
 const router = express.Router();
-const mongoose = require("mongoose");
+// Mongoose Connection
+const db = require("../../services/mongoose");
+
+
 
 // User Model
 const userModel = require("../../models/user.model");
