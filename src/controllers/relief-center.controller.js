@@ -4,11 +4,24 @@ const ReliefCenter = require("../models/relief-center.model");
 // Get Config
 const config = require("../config");
 
-// HTTP Status
+// HTTP Status - Handling HTTP Status Codes Made Easier
 const httpStatus = require("http-status");
 
 // UUID for IDs
 const uuidv1 = require("uuid/v1");
+
+// Get All Relief Centers
+exports.getAllReliefCenters = async (req, res, next) => {
+  try {
+    // const reliefCenters = await ReliefCenter.find({}); // Find One by ID
+    // res.status(httpStatus.FOUND);
+    // res.send(reliefCenters);
+    const allReliefCenters = await ReliefCenter.find();
+    res.send(allReliefCenters);
+  } catch (error) {
+    return next(error);
+  }
+};
 
 // Create Relief Center
 exports.createReliefCenter = async (req, res, next) => {
@@ -33,35 +46,34 @@ exports.createReliefCenter = async (req, res, next) => {
     res.status(httpStatus.CREATED);
 
     // Send back the data that was just created
-    res.send(savedReliefCenter.transform());
+    // Use .transform() in case you're dealing with sensitive information, for eg: Passwords
+    res.send(savedReliefCenter);
   } catch (error) {
-    return next(ReliefCenter.checkDuplicateEmailError(error));
+    // Setup a check for Duplicate Name here
+    return next(error);
+    // return next(ReliefCenter.checkDuplicateEmailError(error));
   }
 };
 
 // Get Relief Center
-exports.getReliefCenter = async (req, res, next) => {
+exports.getReliefCenterByID = async (req, res, next) => {
   try {
-    const user = await ReliefCenter.findOne(req.body);
-    const payload = { sub: user.id };
-    const token = jwt.sign(payload, config.secret);
-    return res.json({ message: "OK", token: token });
+    const { id } = req.params; // Get the ID from Params
+
+    const reliefCenter = await ReliefCenter.findOne({ id: parseInt(id) }); // Find One by ID
+    return res.json(reliefCenter); // Return the Relief Center
   } catch (error) {
     next(error);
   }
 };
 
 // Update Relief Center
-exports.updateReliefCenter = async (req, res, next) => {
+exports.getReliefCenterByName = async (req, res, next) => {
   try {
-    await ReliefCenter
-      .findOneAndUpdate
-      // Fields to update go here
+    const { name } = req.params; // Get the Name from Params
 
-      // { activationKey: req.query.key },
-      // { active: true }
-      ();
-    return res.json({ message: "Relief Center was updated!" });
+    const reliefCenter = await ReliefCenter.findOne({ name: name }); // Find One by Name
+    return res.json(reliefCenter); // Return the Relief Center
   } catch (error) {
     next(error);
   }
@@ -70,14 +82,15 @@ exports.updateReliefCenter = async (req, res, next) => {
 // Delete Relief Center
 exports.deleteReliefCenter = async (req, res, next) => {
   try {
-    await ReliefCenter
-      .findOneAndDelete
-      // Fields to update go here
-
-      // { activationKey: req.query.key },
-      // { active: true }
-      ();
-    return res.json({ message: "Relief Center was deleted!" });
+    const { id } = req.params;
+    const deletedReliefCenter = await ReliefCenter.findOneAndDelete({
+      id: parseInt(id)
+    });
+    res.status(httpStatus.OK);
+    return res.json({
+      message: "Relief Center was deleted!",
+      data: deletedReliefCenter
+    });
   } catch (error) {
     next(error);
   }
