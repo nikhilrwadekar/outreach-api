@@ -11,7 +11,7 @@ mongoose.connection.on("connected", () => {
 });
 
 // Error on trying to connect to MongoDB
-mongoose.connection.on("error", () => {
+mongoose.connection.on("error", err => {
   console.log(`Could not connect to MongoDB because of ${err}`);
   process.exit(1);
 });
