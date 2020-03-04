@@ -17,6 +17,6 @@ router.post(
   reliefCenterController.createReliefCenter
 ); // Create New Relief Center - Check if it exists based on it's name
 router.get("/id/:id", reliefCenterController.getReliefCenterByID); // Get a Relief Center based on it's ID
-router.get("/name/:name", reliefCenterController.getReliefCenterByName); // Get a Relief Center based on it's name
+router.get("/:name", reliefCenterController.getReliefCenterByName); // Get a Relief Center based on it's name
 
 module.exports = router;
