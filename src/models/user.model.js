@@ -6,6 +6,13 @@ const roles = ["volunteer", "admin"];
 // Availabilities
 const availabilities = ["anytime", "preferred"];
 
+// Task Schema
+const taskSchema = new mongoose.Schema({
+  job_type: String,
+  date: Date,
+  location: String
+});
+
 // Declare the Schema of the Mongo model
 var userSchema = new mongoose.Schema({
   name: {
@@ -40,7 +47,7 @@ var userSchema = new mongoose.Schema({
     enum: roles
   },
   tasks: {
-    type: ["Mixed"]
+    type: [taskSchema]
   },
 
   address: {

@@ -7,7 +7,13 @@ let user = {
   contact_number: 9876543210,
   role: "volunteer",
   tasks: {
-    type: ["Mixed"]
+    type: [
+      {
+        job_type: "Cooking",
+        date: "2020-03-01T06:52:57.766Z",
+        location: "157, W 49th Ave, Vancouver, BC, CA - V5Y2Z7"
+      }
+    ]
   },
 
   address: {
