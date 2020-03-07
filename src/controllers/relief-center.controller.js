@@ -27,7 +27,7 @@ exports.getAllReliefCenters = async (req, res, next) => {
 exports.createReliefCenter = async (req, res, next) => {
   try {
     // New ID for the Relief Center
-    const activationKey = uuidv1();
+    const reliefCenterID = uuidv1();
 
     // Details for the Relief Center from the Request (body)
     const body = req.body;
@@ -37,10 +37,10 @@ exports.createReliefCenter = async (req, res, next) => {
     // Let MongoDB handle it
 
     // Take the data from Request, Use the Model to create the entry
-    const user = new ReliefCenter(body);
+    const reliefCenter = new ReliefCenter(body);
 
     // Save the entry into MongoDB
-    const savedReliefCenter = await user.save();
+    const savedReliefCenter = await reliefCenter.save();
 
     // Return with Status of Created
     res.status(httpStatus.CREATED);

@@ -17,29 +17,34 @@ const opportunitySchema = new mongoose.Schema({
 });
 
 // Declare the Schema for Relief Centers of the Mongo model
-const reliefCenterSchema = new mongoose.Schema({
-  name: {
-    type: "String",
-    required: true
-  },
-  description: {
-    type: "String",
-    required: true
-  },
-  picture_url: {
-    type: "String",
-    required: true
-  },
-  location: {
-    type: "String",
-    required: true
-  },
-  volunteers: {
-    opportunities: {
-      type: [opportunitySchema]
+const reliefCenterSchema = new mongoose.Schema(
+  {
+    name: {
+      type: "String",
+      required: true
+    },
+    description: {
+      type: "String",
+      required: true
+    },
+    picture_url: {
+      type: "String",
+      required: true
+    },
+    location: {
+      type: "String",
+      required: true
+    },
+    volunteers: {
+      opportunities: {
+        type: [opportunitySchema]
+      }
     }
+  }, // Save Created At, Update At Time fields!
+  {
+    timestamps: true
   }
-});
+);
 
 //Export the model
 module.exports = mongoose.model("ReliefCenter", reliefCenterSchema);
