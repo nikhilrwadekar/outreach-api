@@ -1,4 +1,5 @@
-let user = {
+// Volunteer Example
+let volunteer = {
   name: "Nikhil Wadekar",
   email: "nikhilrwadekar@gmail.com",
   password: "password",
@@ -30,5 +31,21 @@ let user = {
   availability: {
     type: "anytime",
     schedule: []
+  }
+};
+
+// Admin Example
+
+let admin = {
+  name: "Angel Augustine",
+  email: "angel.pazhalinath@gmail.com",
+  password: "password",
+  role: "admin",
+  address: {
+    street: "66, W 63rd Ave",
+    city: "Vancouver",
+    country: "Canada",
+    province: "British Columbia",
+    postal_code: "V5Y2Z7"
   }
 };

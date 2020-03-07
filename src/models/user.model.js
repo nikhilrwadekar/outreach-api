@@ -13,82 +13,105 @@ const taskSchema = new mongoose.Schema({
   location: String
 });
 
-// Declare the Schema of the Mongo model
-var userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    unique: false
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true
-  },
-  password: {
-    type: String,
-    required: true,
-    minlength: 4,
-    maxlength: 128
-  },
-  profile_picture_url: {
-    type: String
-    // match: "(http(s?):)([/|.|w|s|-])*.(?:jpg|gif|png)"
-  },
-  contact_number: {
-    type: Number,
-    required: false,
-    unique: true
-  },
-  role: {
-    type: String,
-    default: "volunteer",
-    enum: roles
-  },
-  tasks: {
-    type: [taskSchema]
-  },
+// Schedule Schema
+const scheduleSchema = new mongoose.Schema({
+  date: Date,
+  start_time: Date,
+  end_time: Date
+});
 
-  address: {
-    street: {
-      type: "String"
-    },
-    city: {
-      type: String
-    },
-    country: {
-      type: String
-    },
-    province: {
-      type: String
-    },
-    postal_code: {
-      type: String
-    }
-  },
-  preferences: {
-    volunteering_type: {
-      type: [String]
-    },
-    additional_skills: {
-      type: [String]
-    }
-  },
-  availability: {
-    type: {
+// Declare the Schema of the Mongo model
+var userSchema = new mongoose.Schema(
+  {
+    name: {
       type: String,
       required: true,
-      enum: availabilities
+      unique: false
     },
-    schedule: {
-      type: ["Mixed"],
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true
+    },
+    password: {
+      type: String,
+      required: true,
+      minlength: 4,
+      maxlength: 128
+    },
+    profile_picture_url: {
+      type: String,
+      default: ""
+    },
+    contact_number: {
+      type: Number,
+      required: false,
+      unique: true
+    },
+    role: {
+      type: String,
+      default: "volunteer",
+      enum: roles
+    },
+    tasks: {
+      type: [taskSchema],
       required: function() {
-        return this.type === "preferred";
-      } // Only required if type equals 'preferred'
+        return this.role === "volunteer";
+      } // Only required if role equals 'volunteer'
+    },
+
+    address: {
+      street: {
+        type: "String"
+      },
+      city: {
+        type: String
+      },
+      country: {
+        type: String
+      },
+      province: {
+        type: String
+      },
+      postal_code: {
+        type: String
+      }
+    },
+    preferences: {
+      type: {
+        required: function() {
+          return this.role === "volunteer";
+        } // Only required if role equals 'volunteer'
+      },
+      volunteering_type: {
+        type: [String]
+      },
+      additional_skills: {
+        type: [String]
+      }
+    },
+    availability: {
+      type: {
+        type: String,
+        required: function() {
+          return this.role === "volunteer";
+        }, // Only required if role equals 'volunteer'
+        enum: availabilities
+      },
+      schedule: {
+        type: [scheduleSchema],
+        required: function() {
+          return this.role === "volunteer" && this.type === "preferred";
+        } // Only required if type equals 'preferred'
+      }
     }
+  },
+  // Save Created At, Update At Time fields!
+  {
+    timestamps: true
   }
-});
+);
 
 //Export the model
 module.exports = mongoose.model("User", userSchema);
