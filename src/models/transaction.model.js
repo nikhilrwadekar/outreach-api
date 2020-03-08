@@ -4,13 +4,18 @@ const mongoose = require("mongoose"); // Erase if already required
 var transactionSchema = new mongoose.Schema(
   {
     type: {
-      type: "String"
+      type: "String",
+      default: "donation"
     },
     amount: {
-      type: "String"
+      type: "String",
+      min: 1,
+      required: true
     },
     currency: {
-      type: "String"
+      type: "String",
+      default: "CAD",
+      required: true
     }
   }, // Save Created At, Update At Time fields!
   {

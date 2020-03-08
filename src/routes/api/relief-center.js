@@ -15,13 +15,15 @@ const { createReliefCenter } = require("../../validators/relief-center");
 router.get("/", reliefCenterController.getAllReliefCenters);
 
 // Create New Relief Center - Check if it exists based on it's name
-router.post(
-  "/create",
+router.post("/create", reliefCenterController.createReliefCenter);
 
-  reliefCenterController.createReliefCenter
-);
+// Get a Relief Center based on it's ID
+router.get("/id/:id", reliefCenterController.getReliefCenterByID);
 
-router.get("/id/:id", reliefCenterController.getReliefCenterByID); // Get a Relief Center based on it's ID
-router.get("/:name", reliefCenterController.getReliefCenterByName); // Get a Relief Center based on it's name
+// Get a Relief Center based on it's name
+router.get("/:name", reliefCenterController.getReliefCenterByName);
+
+// UPDATE Relief Center
+router.put("/id/:id", reliefCenterController.updateReliefCenterByID);
 
 module.exports = router;

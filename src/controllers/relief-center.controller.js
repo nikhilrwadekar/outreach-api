@@ -8,7 +8,7 @@ const config = require("../config");
 const httpStatus = require("http-status");
 
 // UUID for IDs
-const uuidv1 = require("uuid/v1");
+// const uuidv1 = require("uuid/v1");
 
 // Get All Relief Centers
 exports.getAllReliefCenters = async (req, res, next) => {
@@ -27,7 +27,7 @@ exports.getAllReliefCenters = async (req, res, next) => {
 exports.createReliefCenter = async (req, res, next) => {
   try {
     // New ID for the Relief Center
-    const reliefCenterID = uuidv1();
+    // const reliefCenterID = uuidv1();
 
     // Details for the Relief Center from the Request (body)
     const body = req.body;
@@ -90,6 +90,23 @@ exports.deleteReliefCenter = async (req, res, next) => {
     return res.json({
       message: "Relief Center was deleted!",
       data: deletedReliefCenter
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// PUT (Update) Relief Center
+exports.updateReliefCenterByID = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const udpatedReliefCenter = await ReliefCenter.findOneAndUpdate(
+      { _id: id },
+      req.body
+    );
+    res.status(httpStatus.OK);
+    return res.json({
+      message: "Relief Center was updated!"
     });
   } catch (error) {
     next(error);
