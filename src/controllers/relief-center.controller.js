@@ -95,3 +95,20 @@ exports.deleteReliefCenter = async (req, res, next) => {
     next(error);
   }
 };
+
+// PUT (Update) Relief Center
+exports.updateReliefCenterByID = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const udpatedReliefCenter = await ReliefCenter.findOneAndUpdate(
+      { _id: id },
+      req.body
+    );
+    res.status(httpStatus.OK);
+    return res.json({
+      message: "Relief Center was updated!"
+    });
+  } catch (error) {
+    next(error);
+  }
+};
