@@ -8,7 +8,7 @@ const config = require("../config");
 const httpStatus = require("http-status");
 
 // UUID for IDs
-const uuidv1 = require("uuid/v1");
+// const uuidv1 = require("uuid/v1");
 
 // Get All Relief Centers
 exports.getAllReliefCenters = async (req, res, next) => {
@@ -27,7 +27,7 @@ exports.getAllReliefCenters = async (req, res, next) => {
 exports.createReliefCenter = async (req, res, next) => {
   try {
     // New ID for the Relief Center
-    const reliefCenterID = uuidv1();
+    // const reliefCenterID = uuidv1();
 
     // Details for the Relief Center from the Request (body)
     const body = req.body;

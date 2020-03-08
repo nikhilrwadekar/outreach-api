@@ -7,24 +7,11 @@ const config = require("../config");
 // HTTP Status - Handling HTTP Status Codes Made Easier
 const httpStatus = require("http-status");
 
-// UUID for IDs
-const uuidv1 = require("uuid/v1");
-
-// Get All Users
-exports.getAllUsers = async (req, res, next) => {
-  try {
-    const allUsers = await User.find();
-    res.send(allUsers);
-  } catch (error) {
-    return next(error);
-  }
-};
-
-// Create User
+// POST User
 exports.createUser = async (req, res, next) => {
   try {
     // New ID for the User
-    const userID = uuidv1();
+    // const userID = uuidv1();
 
     // Details for the User from the Request (body)
     const body = req.body;
@@ -52,31 +39,31 @@ exports.createUser = async (req, res, next) => {
   }
 };
 
-// Get User
+// GET User
 exports.getUserByID = async (req, res, next) => {
   try {
     const { id } = req.params; // Get the ID from Params
 
-    const user = await User.findOne({ id: parseInt(id) }); // Find One by ID
+    const user = await User.findOne({ id: parseInt(id) }).select("-password"); // Find One by ID
     return res.json(user); // Return the User
   } catch (error) {
     next(error);
   }
 };
 
-// Get User based on their Email
+// POST based on their Email
 exports.getUserByEmail = async (req, res, next) => {
   try {
     const { email } = req.params; // Get the Email from Params
 
-    const user = await User.find({ email: email }); // Find One by Name
+    const user = await User.find({ email: email }).select("-password"); // Find One by Name
     return res.json(user); // Return the User
   } catch (error) {
     next(error);
   }
 };
 
-// Delete User
+// DELETE User
 exports.deleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -87,6 +74,20 @@ exports.deleteUser = async (req, res, next) => {
     return res.json({
       message: "User was deleted!",
       data: deletedUser
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// PUT (Update) User
+exports.updateUserByID = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const udpatedUser = await User.findOneAndUpdate({ _id: id }, req.body);
+    res.status(httpStatus.OK);
+    return res.json({
+      message: "User was updated!"
     });
   } catch (error) {
     next(error);
