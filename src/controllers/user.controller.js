@@ -64,12 +64,12 @@ exports.getUserByID = async (req, res, next) => {
   }
 };
 
-// Update User
-exports.getUserByName = async (req, res, next) => {
+// Get User based on their Email
+exports.getUserByEmail = async (req, res, next) => {
   try {
-    const { name } = req.params; // Get the Name from Params
+    const { email } = req.params; // Get the Email from Params
 
-    const user = await User.find({ name: name }); // Find One by Name
+    const user = await User.find({ email: email }); // Find One by Name
     return res.json(user); // Return the User
   } catch (error) {
     next(error);

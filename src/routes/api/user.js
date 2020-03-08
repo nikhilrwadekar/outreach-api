@@ -11,9 +11,6 @@ const userController = require("../../controllers/user.controller");
 
 // Routes for Users
 
-// Get all Users
-router.get("/", userController.getAllUsers);
-
 // Create New User - Check if it exists based on it's name
 router.post(
   "/create",
@@ -21,7 +18,7 @@ router.post(
   userController.createUser
 );
 
-router.get("/id/:id", userController.getUserByID); // Get a User based on it's ID
-router.get("/:name", userController.getUserByName); // Get a User based on it's name
+router.get("/id/:id", userController.getUserByID); // Get a User based on their ID
+router.get("/:email", userController.getUserByEmail); // Get a User based on their email
 
 module.exports = router;

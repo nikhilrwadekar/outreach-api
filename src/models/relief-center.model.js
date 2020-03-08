@@ -40,7 +40,8 @@ const reliefCenterSchema = new mongoose.Schema(
         type: [opportunitySchema]
       }
     }
-  }, // Save Created At, Update At Time fields!
+  },
+  // Save Created At, Update At Time fields!
   {
     timestamps: true
   }
