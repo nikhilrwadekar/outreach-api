@@ -111,12 +111,30 @@ exports.donateToDisasterByID = async (req, res, next) => {
       { $push: { donations: newTransaction } }
     );
 
+    const savedTransaction = await newTransaction.save();
+
     res.status(httpStatus.OK);
     return res.json({
-      message: "Donation was successful!",
-      data: disasterDonation
+      message: `Donation was successful to ${disasterDonation.name}!`,
+      data: savedTransaction
     });
   } catch (error) {
     next(error);
   }
+};
+
+// Get Total Donated to a Disaster based on Grouped by Currency
+exports.getTotalDonatedByID = async (req, res, next) => {
+  var pipeline = [
+    {
+      $group: {
+        currency: "$currency",
+        total: { $sum: "$amount" }
+      }
+    }
+  ];
+  Disaster.aggregate(pipeline, function(err, results) {
+    if (err) throw err;
+    console.log(results);
+  });
 };
