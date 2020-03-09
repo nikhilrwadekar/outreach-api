@@ -200,6 +200,7 @@ exports.getOpportunitiesGroupedByReliefCenter = async (req, res, next) => {
   }
 };
 
+// Get Requests assigned/approved by Admin based on User Email
 exports.getAssignedOpportunitiesByUserEmail = async (req, res, next) => {
   try {
     const { email } = req.params;
@@ -219,6 +220,7 @@ exports.getAssignedOpportunitiesByUserEmail = async (req, res, next) => {
         $project: {
           name: 1,
           location: 1,
+          "volunteers.opportunities._id": 1,
           "volunteers.opportunities.date": 1,
           "volunteers.opportunities.type": 1,
           "volunteers.opportunities.time": 1
@@ -227,23 +229,105 @@ exports.getAssignedOpportunitiesByUserEmail = async (req, res, next) => {
       // Group them in a particular fashion
       {
         $group: {
-          _id: "$name",
+          _id: "$_id",
+          name: { $first: "$name" },
           location: { $first: "$location" },
           tasks: { $push: "$volunteers.opportunities" }
+        }
+      }
+    ]);
+
+    res.json(getUserAssignedTasks);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get Requests sent to Admin based on User Email
+exports.getRequestedOpportunitiesByUserEmail = async (req, res, next) => {
+  try {
+    const { email } = req.params;
+    let getUserRequestsSendToAdmin = await ReliefCenter.aggregate([
+      // First Proper Attempt
+
+      // Unwind all opportunities
+      { $unwind: "$volunteers.opportunities" },
+      // Match the ones where the user with 'email' has 'request' 'received'
+      {
+        $match: {
+          "volunteers.opportunities.requests.received": email
+        }
+      },
+      // Only pass on the following fields
+      {
+        $project: {
+          name: 1,
+          location: 1,
+          "volunteers.opportunities._id": 1,
+          "volunteers.opportunities.date": 1,
+          "volunteers.opportunities.type": 1,
+          "volunteers.opportunities.time": 1
+        }
+      },
+      // Group them in a particular fashion
+      {
+        $group: {
+          _id: "$_id",
+          name: { $first: "$name" },
+          location: { $first: "$location" },
+          requests: { $push: "$volunteers.opportunities" }
         }
       }
 
       //Second Try
     ]);
 
-    res.json(getUserAssignedTasks);
+    res.json(getUserRequestsSendToAdmin);
+  } catch (error) {
+    next(error);
+  }
+};
 
-    console.log("Calleed");
-    let opportunities = await ReliefCenter.find({
-      "volunteers.opportunities.assigned": "nikhilrwadekar@gmail.com"
-    });
+// Get Requests received by Admin based on User Email
+exports.getReceivedOpportunitiesByUserEmail = async (req, res, next) => {
+  try {
+    const { email } = req.params;
+    let getUserRequestsSendFromAdmin = await ReliefCenter.aggregate([
+      // First Proper Attempt
 
-    res.json(opportunities);
+      // Unwind all opportunities
+      { $unwind: "$volunteers.opportunities" },
+      // Match the ones where the user with 'email' has 'request' 'received'
+      {
+        $match: {
+          "volunteers.opportunities.requests.sent": email
+        }
+      },
+      // Only pass on the following fields
+      {
+        $project: {
+          name: 1,
+          location: 1,
+          "volunteers.opportunities._id": 1,
+          "volunteers.opportunities.date": 1,
+          "volunteers.opportunities.type": 1,
+          "volunteers.opportunities.time": 1
+        }
+      },
+      // Group them in a particular fashion
+      {
+        $group: {
+          _id: "$_id",
+          name: { $first: "$name" },
+          location: { $first: "$location" },
+          requests: { $push: "$volunteers.opportunities" }
+        }
+      }
+
+      //Second Try
+    ]);
+
+    res.json(getUserRequestsSendFromAdmin);
   } catch (error) {
     next(error);
   }
