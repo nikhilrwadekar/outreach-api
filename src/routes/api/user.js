@@ -23,4 +23,16 @@ router.get("/:email", userController.getUserByEmail);
 // UPDATE User
 router.put("/id/:id", userController.updateUserByID);
 
+// PUT a request to a volunteer - for a task - to a relief center
+router.put(
+  "/id/:userID/volunteer/:taskID",
+  userController.sendVolunteerRequest
+);
+
+// Get a USER's tasks by Email!
+router.get(
+  "/:email/tasks/",
+  userController.getAssignedOpportunitiesByUserEmail
+);
+
 module.exports = router;
