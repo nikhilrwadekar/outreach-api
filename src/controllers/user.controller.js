@@ -99,59 +99,49 @@ exports.sendVolunteerRequest = async (req, res, next) => {
   try {
     const { userID, taskID } = req.params;
 
-    let userFound,
-      taskFound = false;
     // Find User with the UserID
-    const currentUser = await User.findOne({ _id: userID }, function(
-      err,
-      result
-    ) {
+    await User.findOne({ _id: userID }, async function(err, user) {
       if (err) {
-        console.log("Error");
+        console.log("Error:", err);
       }
 
-      if (result) {
-        console.log("User Found!");
-      } else {
-        console.log("User Not Found!");
-      }
-    });
+      // If User is found.. continue with the request or else, return a NOT FOUND
+      if (user) {
+        // Find Relief Center that has the task with taskID
+        await ReliefCenter.findOne(
+          { "volunteers.opportunities._id": taskID },
+          async function(err, reliefCenter) {
+            if (err) next(err);
 
-    // If User is found.. continue with the request or else, return a NOT FOUND
-    if (currentUser) {
-      // Find Relief Center that has the task with taskID
-      const foundReliefCenterWithTheTask = await ReliefCenter.findOne(
-        { "volunteers.opportunities._id": taskID },
-        function(err, reliefCenter) {
-          if (err) next(err);
-        }
-      );
+            // If Relief Center is found..
+            if (reliefCenter) {
+              // Get the concerned Task from the Relief Center
+              let task = await reliefCenter.volunteers.opportunities.id(taskID);
 
-      if (foundReliefCenterWithTheTask) {
-        // Get the concerned Task from the Relief Center
-        let task = foundReliefCenterWithTheTask.volunteers.opportunities.id(
-          taskID
+              // Add User's Request - if it hasnt been added already
+              if (!task.requests.received.includes(user.email)) {
+                // Push User's ID to the received
+                task.requests.received.push(user.email);
+                // Save Relief Center!
+                reliefCenter.save();
+                res.status(httpStatus.OK);
+                res.json({ message: "Request has been sent!" });
+              }
+              // TODO: Add Status Code to indicate that the request cannot be completed.
+              res.json({ message: "Request has already been sent!" });
+            } else {
+              res.status(httpStatus.NOT_FOUND);
+              res.json({
+                message: "Requested task was not found in any Relief Center!"
+              });
+            }
+          }
         );
-
-        // Add User's Request - if it hasnt been added already
-        if (!task.requests.received.includes(currentUser.email)) {
-          // Push User's ID to the received
-          task.requests.received.push(currentUser.email);
-          // Save Relief Center!
-          foundReliefCenterWithTheTask.save();
-          res.status(httpStatus.OK);
-          res.json({ message: "Request has been sent!" });
-        }
-        // TODO: Add Status Code to indicate that the request cannot be completed.
-        res.json({ message: "Request has already been sent!" });
       } else {
         res.status(httpStatus.NOT_FOUND);
-        res.json({ message: "Task not found!" });
+        res.json({ message: "User not found." });
       }
-    } else {
-      res.status(httpStatus.NOT_FOUND);
-      res.json({ message: "User not found." });
-    }
+    });
   } catch (error) {
     next(error);
   }
