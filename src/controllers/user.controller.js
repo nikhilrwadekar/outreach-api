@@ -98,22 +98,45 @@ exports.updateUserByID = async (req, res, next) => {
 exports.sendVolunteerRequest = async (req, res, next) => {
   try {
     const { userID, taskID } = req.params;
-    //     const updatedReliefCenter = await ReliefCenter.findOneAndUpdate(  { volunteers.opportunities._id: taskID},
-    // )
 
-    // Send Requests - User -> Admin!
+    // Find User with the UserID
+    const currentUser = User.findOne({ _id: userID });
 
-    // Find Relief Center that has the task with taskID
-    const foundReliefCenterWithTheTask = await ReliefCenter.findOne(
-      { "volunteers.opportunities._id": taskID },
-      function(err, reliefCenter) {
-        if (reliefCenter) {
-          console.log(reliefCenter.volunteers.opportunities);
+    // If User is found.. continue with the request or else, return a NOT FOUND
+    if (currentUser) {
+      // Find Relief Center that has the task with taskID
+      const foundReliefCenterWithTheTask = await ReliefCenter.findOne(
+        { "volunteers.opportunities._id": taskID },
+        function(err, reliefCenter) {
+          if (err) next(err);
         }
-      }
-    );
+      );
 
-    res.json(foundReliefCenterWithTheTask);
+      if (foundReliefCenterWithTheTask) {
+        // Get the concerned Task from the Relief Center
+        let task = foundReliefCenterWithTheTask.volunteers.opportunities.id(
+          taskID
+        );
+
+        // Add User's Request - if it hasnt been added already
+        if (!task.requests.received.includes(userID)) {
+          // Push User's ID to the received
+          task.requests.received.push(userID);
+          // Save Relief Center!
+          foundReliefCenterWithTheTask.save();
+          res.status(httpStatus.OK);
+          res.json({ message: "Request has been sent!" });
+        }
+        // TODO: Add Status Code to indicate that the request cannot be completed.
+        res.json({ message: "Request has already been sent!" });
+      } else {
+        res.status(httpStatus.NOT_FOUND);
+        res.json({ message: "Task not found!" });
+      }
+    } else {
+      res.status(httpStatus.NOT_FOUND);
+      res.json({ message: "User not found." });
+    }
   } catch (error) {
     next(error);
   }
