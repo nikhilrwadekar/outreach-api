@@ -1,6 +1,6 @@
 // Get The Model
 const User = require("../models/user.model");
-
+const ReliefCenter = require("../models/relief-center.model");
 // Get Config
 const config = require("../config");
 
@@ -84,11 +84,36 @@ exports.deleteUser = async (req, res, next) => {
 exports.updateUserByID = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const udpatedUser = await User.findOneAndUpdate({ _id: id }, req.body);
+    const updatedUser = await User.findOneAndUpdate({ _id: id }, req.body);
     res.status(httpStatus.OK);
     return res.json({
-      message: "User was updated!"
+      message: `User was updated - ${updatedUser._id}`
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Request to Volunteer
+exports.sendVolunteerRequest = async (req, res, next) => {
+  try {
+    const { userID, taskID } = req.params;
+    //     const updatedReliefCenter = await ReliefCenter.findOneAndUpdate(  { volunteers.opportunities._id: taskID},
+    // )
+
+    // Send Requests - User -> Admin!
+
+    // Find Relief Center that has the task with taskID
+    const foundReliefCenterWithTheTask = await ReliefCenter.findOne(
+      { "volunteers.opportunities._id": taskID },
+      function(err, reliefCenter) {
+        if (reliefCenter) {
+          console.log(reliefCenter.volunteers.opportunities);
+        }
+      }
+    );
+
+    res.json(foundReliefCenterWithTheTask);
   } catch (error) {
     next(error);
   }
