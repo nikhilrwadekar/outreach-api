@@ -99,59 +99,49 @@ exports.sendVolunteerRequest = async (req, res, next) => {
   try {
     const { userID, taskID } = req.params;
 
-    let userFound,
-      taskFound = false;
     // Find User with the UserID
-    const currentUser = await User.findOne({ _id: userID }, function(
-      err,
-      result
-    ) {
+    await User.findOne({ _id: userID }, async function(err, user) {
       if (err) {
-        console.log("Error");
+        console.log("Error:", err);
       }
 
-      if (result) {
-        console.log("User Found!");
-      } else {
-        console.log("User Not Found!");
-      }
-    });
+      // If User is found.. continue with the request or else, return a NOT FOUND
+      if (user) {
+        // Find Relief Center that has the task with taskID
+        await ReliefCenter.findOne(
+          { "volunteers.opportunities._id": taskID },
+          async function(err, reliefCenter) {
+            if (err) next(err);
 
-    // If User is found.. continue with the request or else, return a NOT FOUND
-    if (currentUser) {
-      // Find Relief Center that has the task with taskID
-      const foundReliefCenterWithTheTask = await ReliefCenter.findOne(
-        { "volunteers.opportunities._id": taskID },
-        function(err, reliefCenter) {
-          if (err) next(err);
-        }
-      );
+            // If Relief Center is found..
+            if (reliefCenter) {
+              // Get the concerned Task from the Relief Center
+              let task = await reliefCenter.volunteers.opportunities.id(taskID);
 
-      if (foundReliefCenterWithTheTask) {
-        // Get the concerned Task from the Relief Center
-        let task = foundReliefCenterWithTheTask.volunteers.opportunities.id(
-          taskID
+              // Add User's Request - if it hasnt been added already
+              if (!task.requests.received.includes(user.email)) {
+                // Push User's ID to the received
+                task.requests.received.push(user.email);
+                // Save Relief Center!
+                reliefCenter.save();
+                res.status(httpStatus.OK);
+                res.json({ message: "Request has been sent!" });
+              }
+              // TODO: Add Status Code to indicate that the request cannot be completed.
+              res.json({ message: "Request has already been sent!" });
+            } else {
+              res.status(httpStatus.NOT_FOUND);
+              res.json({
+                message: "Requested task was not found in any Relief Center!"
+              });
+            }
+          }
         );
-
-        // Add User's Request - if it hasnt been added already
-        if (!task.requests.received.includes(currentUser.email)) {
-          // Push User's ID to the received
-          task.requests.received.push(currentUser.email);
-          // Save Relief Center!
-          foundReliefCenterWithTheTask.save();
-          res.status(httpStatus.OK);
-          res.json({ message: "Request has been sent!" });
-        }
-        // TODO: Add Status Code to indicate that the request cannot be completed.
-        res.json({ message: "Request has already been sent!" });
       } else {
         res.status(httpStatus.NOT_FOUND);
-        res.json({ message: "Task not found!" });
+        res.json({ message: "User not found." });
       }
-    } else {
-      res.status(httpStatus.NOT_FOUND);
-      res.json({ message: "User not found." });
-    }
+    });
   } catch (error) {
     next(error);
   }
@@ -200,6 +190,7 @@ exports.getOpportunitiesGroupedByReliefCenter = async (req, res, next) => {
   }
 };
 
+// Get Requests assigned/approved by Admin based on User Email
 exports.getAssignedOpportunitiesByUserEmail = async (req, res, next) => {
   try {
     const { email } = req.params;
@@ -219,6 +210,7 @@ exports.getAssignedOpportunitiesByUserEmail = async (req, res, next) => {
         $project: {
           name: 1,
           location: 1,
+          "volunteers.opportunities._id": 1,
           "volunteers.opportunities.date": 1,
           "volunteers.opportunities.type": 1,
           "volunteers.opportunities.time": 1
@@ -227,23 +219,105 @@ exports.getAssignedOpportunitiesByUserEmail = async (req, res, next) => {
       // Group them in a particular fashion
       {
         $group: {
-          _id: "$name",
+          _id: "$_id",
+          name: { $first: "$name" },
           location: { $first: "$location" },
           tasks: { $push: "$volunteers.opportunities" }
+        }
+      }
+    ]);
+
+    res.json(getUserAssignedTasks);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get Requests sent to Admin based on User Email
+exports.getRequestedOpportunitiesByUserEmail = async (req, res, next) => {
+  try {
+    const { email } = req.params;
+    let getUserRequestsSendToAdmin = await ReliefCenter.aggregate([
+      // First Proper Attempt
+
+      // Unwind all opportunities
+      { $unwind: "$volunteers.opportunities" },
+      // Match the ones where the user with 'email' has 'request' 'received'
+      {
+        $match: {
+          "volunteers.opportunities.requests.received": email
+        }
+      },
+      // Only pass on the following fields
+      {
+        $project: {
+          name: 1,
+          location: 1,
+          "volunteers.opportunities._id": 1,
+          "volunteers.opportunities.date": 1,
+          "volunteers.opportunities.type": 1,
+          "volunteers.opportunities.time": 1
+        }
+      },
+      // Group them in a particular fashion
+      {
+        $group: {
+          _id: "$_id",
+          name: { $first: "$name" },
+          location: { $first: "$location" },
+          requests: { $push: "$volunteers.opportunities" }
         }
       }
 
       //Second Try
     ]);
 
-    res.json(getUserAssignedTasks);
+    res.json(getUserRequestsSendToAdmin);
+  } catch (error) {
+    next(error);
+  }
+};
 
-    console.log("Calleed");
-    let opportunities = await ReliefCenter.find({
-      "volunteers.opportunities.assigned": "nikhilrwadekar@gmail.com"
-    });
+// Get Requests received by Admin based on User Email
+exports.getReceivedOpportunitiesByUserEmail = async (req, res, next) => {
+  try {
+    const { email } = req.params;
+    let getUserRequestsSendFromAdmin = await ReliefCenter.aggregate([
+      // First Proper Attempt
 
-    res.json(opportunities);
+      // Unwind all opportunities
+      { $unwind: "$volunteers.opportunities" },
+      // Match the ones where the user with 'email' has 'request' 'received'
+      {
+        $match: {
+          "volunteers.opportunities.requests.sent": email
+        }
+      },
+      // Only pass on the following fields
+      {
+        $project: {
+          name: 1,
+          location: 1,
+          "volunteers.opportunities._id": 1,
+          "volunteers.opportunities.date": 1,
+          "volunteers.opportunities.type": 1,
+          "volunteers.opportunities.time": 1
+        }
+      },
+      // Group them in a particular fashion
+      {
+        $group: {
+          _id: "$_id",
+          name: { $first: "$name" },
+          location: { $first: "$location" },
+          requests: { $push: "$volunteers.opportunities" }
+        }
+      }
+
+      //Second Try
+    ]);
+
+    res.json(getUserRequestsSendFromAdmin);
   } catch (error) {
     next(error);
   }

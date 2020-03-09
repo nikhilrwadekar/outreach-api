@@ -29,10 +29,22 @@ router.put(
   userController.sendVolunteerRequest
 );
 
-// Get a USER's tasks by Email!
+// Get a USER's assigned tasks by Email!
 router.get(
   "/:email/tasks/",
   userController.getAssignedOpportunitiesByUserEmail
+);
+
+// Get sent requests by User's Email!
+router.get(
+  "/:email/requests/sent",
+  userController.getRequestedOpportunitiesByUserEmail
+);
+
+// Get received requests (from Admin) by User's Email!
+router.get(
+  "/:email/requests/received",
+  userController.getReceivedOpportunitiesByUserEmail
 );
 
 module.exports = router;
