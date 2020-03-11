@@ -2,7 +2,7 @@
   "name": "outreach-api",
   "version": "1.0.0",
   "description": "The API that will serve data over Express JS and MongoDB to Outreach's React Native and React Web Dashboard",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon src/index.js"
@@ -35,6 +35,7 @@
     "express-validation": "^2.0.0",
     "http-status": "^1.4.2",
     "joi": "^14.3.1",
+    "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.9.2",
     "mongoose-error-handler": "^1.1.0",
     "uuid": "^7.0.1"

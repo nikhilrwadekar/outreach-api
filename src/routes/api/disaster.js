@@ -9,10 +9,17 @@ const validator = require("express-validation");
 const disasterController = require("../../controllers/disaster.controller");
 // const { createDisaster } = require("../../validators/disaster");
 
+// Token Authenticator
+const authController = require("../../controllers/auth.controller");
+
 // Routes for Disasters
 
 // Get all Disasters
-router.get("/", disasterController.getAllDisasters);
+router.get(
+  "/",
+  authController.authenticateToken,
+  disasterController.getAllDisasters
+);
 
 // Create New Disaster - Check if it exists based on it's name
 router.post(
