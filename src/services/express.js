@@ -1,5 +1,8 @@
 "use strict";
 
+// Get the ENV file
+require("dotenv").config();
+
 const config = require("../config");
 const express = require("express");
 const cors = require("cors");
@@ -7,9 +10,12 @@ const bodyParser = require("body-parser");
 // const errorHandler = require("../middlewares/error-handler");
 const apiRouter = require("../routes/api");
 
+const jwt = require("jsonwebtoken");
+
 // Make a new Express App
 const app = express();
-app.use(bodyParser.json());
+// app.use(bodyParser.json());
+app.use(express.json());
 app.use(cors());
 
 // API Routes

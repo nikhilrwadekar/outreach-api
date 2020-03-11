@@ -14,9 +14,7 @@ const httpStatus = require("http-status");
 // Get All Disasters
 exports.getAllDisasters = async (req, res, next) => {
   try {
-    // const disasters = await Disaster.find({}); // Find One by ID
-    // res.status(httpStatus.FOUND);
-    // res.send(disasters);
+    //User can be accessed here as we are authenticating it!
     const allDisasters = await Disaster.find();
     res.send(allDisasters);
   } catch (error) {
