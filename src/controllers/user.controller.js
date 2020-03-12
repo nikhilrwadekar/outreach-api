@@ -197,6 +197,7 @@ exports.getAllRequestsFromVolunteers = async (req, res, next) => {
         $project: {
           name: 1,
           location: 1,
+          "volunteers.opportunities._id": 1,
           "volunteers.opportunities.date": 1,
           "volunteers.opportunities.type": 1,
           "volunteers.opportunities.time": 1,
@@ -211,6 +212,7 @@ exports.getAllRequestsFromVolunteers = async (req, res, next) => {
         $project: {
           _id: 0,
           relief_center_id: "$_id",
+          task_id: "$volunteers.opportunities._id",
           name: 1,
           location: 1,
           date: "$volunteers.opportunities.date",
