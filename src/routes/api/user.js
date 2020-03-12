@@ -11,6 +11,13 @@ const userController = require("../../controllers/user.controller");
 
 // Routes for Users
 
+/* ========== ADMIN ROUTES ========== */
+
+router.get(
+  "/admin/requests/received",
+  userController.getAllRequestsFromVolunteers
+);
+
 // POST New User - Check if it exists based on it's name
 router.post("/create", userController.createUser);
 

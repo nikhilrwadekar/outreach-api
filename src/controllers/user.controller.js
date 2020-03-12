@@ -186,6 +186,57 @@ exports.getOpportunitiesGroupedByReliefCenter = async (req, res, next) => {
   }
 };
 
+exports.getAllRequestsFromVolunteers = async (req, res, next) => {
+  try {
+    let allRequestsFromVolunteers = await ReliefCenter.aggregate([
+      // Unwind all opportunities
+      { $unwind: "$volunteers.opportunities" },
+
+      // Only pass on the following fields
+      {
+        $project: {
+          name: 1,
+          location: 1,
+          "volunteers.opportunities.date": 1,
+          "volunteers.opportunities.type": 1,
+          "volunteers.opportunities.time": 1,
+          "volunteers.opportunities.requests.received": 1
+        }
+      },
+
+      // Unwind Againg
+      { $unwind: "$volunteers.opportunities.requests.received" },
+
+      {
+        $project: {
+          _id: 0,
+          relief_center_id: "$_id",
+          name: 1,
+          location: 1,
+          date: "$volunteers.opportunities.date",
+          type: "$volunteers.opportunities.type",
+          start_time: "$volunteers.opportunities.time.start",
+          end_time: "$volunteers.opportunities.time.end",
+          volunteer_email: "$volunteers.opportunities.requests.received"
+        }
+      }
+      // Group them in a particular fashion
+      // {
+      //   $group: {
+      //     _id: "$volunteers.opportunities._id",
+      //     tasks: { $first: { name: "$name" } },
+      //     location: { $first: "$location" },
+      //     requests: { $first: "$volunteers.opportunities.requests.received" }
+      //   }
+      // }
+    ]);
+    console.log("Sending all requests!");
+    res.json(allRequestsFromVolunteers);
+  } catch (error) {
+    next(error);
+  }
+};
+
 // =============================
 // ==== VOLUNTEER API CALLS ====
 // =============================

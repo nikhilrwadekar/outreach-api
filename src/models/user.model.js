@@ -18,8 +18,8 @@ const taskSchema = new mongoose.Schema({
 // Schedule Schema
 const scheduleSchema = new mongoose.Schema({
   date: Date,
-  start_time: Date,
-  end_time: Date
+  start_time: String,
+  end_time: String
 });
 
 // Declare the Schema of the Mongo model

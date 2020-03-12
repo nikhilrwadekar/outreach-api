@@ -48,12 +48,6 @@ exports.deleteTransactionByID = async (req, res, next) => {
 
 // Get Total Donated Grouped by Currency
 exports.getTotalDonated = async (req, res, next) => {
-  /*
-  Order.aggregate({$match: {active: true }}, 
-  {$group: {_id:'$employee', numberOfOrders: {$sum:1}}}, function(err, orders) {
-    res.json(orders);
-});
-  */
   var pipeline = [
     {
       $group: {
@@ -69,15 +63,4 @@ exports.getTotalDonated = async (req, res, next) => {
     if (err) throw err;
     res.send(results);
   });
-
-  // Transaction.aggregate([
-  //   { $match: { type: "donation" } },
-  //   {
-  //     $group: { _id: "$employee", totalDonations: { $sum: 1 } },
-  //     function(err, donations) {
-  //       if (err) throw err;
-  //       res.json(donations);
-  //     }
-  //   }
-  // ]);
 };

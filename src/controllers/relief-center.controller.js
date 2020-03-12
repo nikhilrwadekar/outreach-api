@@ -112,3 +112,10 @@ exports.updateReliefCenterByID = async (req, res, next) => {
     next(error);
   }
 };
+
+// Approve Volunteer Request
+exports.approveVolunteerRequest = async (req, res, next) => {
+  const { reliefCenterID, taskID, emailID } = req.params;
+  res.send(`${reliefCenterID} ${taskID} ${emailID}`);
+  const reliefCenter = await ReliefCenter.findOne({ _id: reliefCenterID });
+};
