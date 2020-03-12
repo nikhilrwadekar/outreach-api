@@ -2,7 +2,7 @@
   "name": "outreach-api",
   "version": "1.0.0",
   "description": "The API that will serve data over Express JS and MongoDB to Outreach's React Native and React Web Dashboard",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon src/index.js"
