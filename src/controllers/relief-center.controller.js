@@ -185,6 +185,7 @@ exports.getReliefCenterRequirements = async (req, res, next) => {
       { $unwind: "$volunteers.opportunities" },
       {
         $project: {
+          relief_center_id: "$_id",
           name: 1,
           type: "$volunteers.opportunities.type",
           required: "$volunteers.opportunities.required"
@@ -197,37 +198,27 @@ exports.getReliefCenterRequirements = async (req, res, next) => {
             name: "$name",
             type: "$type"
           },
-          required: { $sum: "$required" }
+          required: { $sum: "$required" },
+          relief_center_id: { $first: "$relief_center_id" }
         }
       },
 
       {
         $project: {
-          _id: 0,
+          _id: 1,
           name: "$_id.name",
           type: "$_id.type",
-          required: 1
+          required: 1,
+          relief_center_id: 1
         }
       },
       {
         $group: {
-          _id: "$name",
+          _id: "$relief_center_id",
+          name: { $first: "$name" },
           required: { $push: { type: "$type", total: "$required" } }
         }
       }
-
-      // {
-      //   $group: {
-      //     _id: "$volunteers.opportunities.type",
-      //     // location: { $first: "$location" },
-
-      //     // opportunities: {
-      //     //   $first: "$volunteers.opportunities.required"
-      //     //   // $last: "$volunteers.opportunities.required"
-      //     // },
-      //     count: { $sum: "$volunteers.opportunities.required" }
-      //   }
-      // }
     ]);
 
     res.json(reliefCenterRequirements);
