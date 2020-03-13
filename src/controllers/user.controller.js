@@ -275,7 +275,9 @@ exports.getAllOpportunities = async (req, res, next) => {
           opportunity_date: "$volunteers.opportunities.date",
           opportunity_type: "$volunteers.opportunities.type",
           opportunity_time: "$volunteers.opportunities.time",
-          opportunity_required: "$volunteers.opportunities.required"
+          opportunity_required: "$volunteers.opportunities.required",
+          opportunity_assigned: "$volunteers.opportunities.assigned",
+          opportunity_requested: "$volunteers.opportunities.requests.received"
         }
       }
     ]);
