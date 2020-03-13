@@ -31,4 +31,10 @@ router.post(
   "/id/:taskID/:emailID",
   reliefCenterController.approveVolunteerRequest
 );
+
+// Get Task Categorized and Total Count!
+router.get(
+  "/all/requirement",
+  reliefCenterController.getReliefCenterRequirements
+);
 module.exports = router;

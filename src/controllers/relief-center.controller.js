@@ -154,3 +154,84 @@ exports.approveVolunteerRequest = async (req, res, next) => {
     }
   );
 };
+
+// Get Requirements Sorted by total Number of Volunteers Needed
+
+/*
+{
+  relief_center_id: _id,
+  name: "",
+  requirements: [
+    {
+      "task_type": "Cooking" ,
+      "required": "10"
+    },
+    {
+      "task_type": "Driving" ,
+      "required": "8"
+    },
+    {
+      "task_type": "Cleaning" ,
+      "required": "7"
+    }
+}
+*/
+
+exports.getReliefCenterRequirements = async (req, res, next) => {
+  const { reliefCenterID } = req.params;
+
+  try {
+    let reliefCenterRequirements = await ReliefCenter.aggregate([
+      { $unwind: "$volunteers.opportunities" },
+      {
+        $project: {
+          name: 1,
+          type: "$volunteers.opportunities.type",
+          required: "$volunteers.opportunities.required"
+        }
+      },
+
+      {
+        $group: {
+          _id: {
+            name: "$name",
+            type: "$type"
+          },
+          required: { $sum: "$required" }
+        }
+      },
+
+      {
+        $project: {
+          _id: 0,
+          name: "$_id.name",
+          type: "$_id.type",
+          required: 1
+        }
+      },
+      {
+        $group: {
+          _id: "$name",
+          required: { $push: { type: "$type", total: "$required" } }
+        }
+      }
+
+      // {
+      //   $group: {
+      //     _id: "$volunteers.opportunities.type",
+      //     // location: { $first: "$location" },
+
+      //     // opportunities: {
+      //     //   $first: "$volunteers.opportunities.required"
+      //     //   // $last: "$volunteers.opportunities.required"
+      //     // },
+      //     count: { $sum: "$volunteers.opportunities.required" }
+      //   }
+      // }
+    ]);
+
+    res.json(reliefCenterRequirements);
+  } catch (error) {
+    next(error);
+  }
+};
