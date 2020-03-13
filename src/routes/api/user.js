@@ -9,11 +9,11 @@ const validator = require("express-validation");
 const userController = require("../../controllers/user.controller");
 // const { createUser } = require("../../validators/user");
 
+// Suggest Random Volunteer(s)
+router.get("/suggest/:number", userController.suggestRandomNumberOfVolunteers);
+
 // Get All Opportunities
-router.get(
-  "/opportunities",
-  userController.getOpportunitiesGroupedByReliefCenter
-);
+router.get("/opportunities", userController.getAllOpportunities);
 
 // Routes for Users
 
@@ -37,10 +37,7 @@ router.get("/:email", userController.getUserByEmail);
 router.put("/id/:id", userController.updateUserByID);
 
 // PUT a request to a volunteer - for a task - to a relief center
-router.put(
-  "/id/:userID/volunteer/:taskID",
-  userController.sendVolunteerRequest
-);
+router.put("/id/:email/volunteer/:taskID", userController.sendVolunteerRequest);
 
 // Get a USER's assigned tasks by Email!
 router.get(
