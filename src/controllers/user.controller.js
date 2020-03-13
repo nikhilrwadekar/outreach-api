@@ -88,10 +88,10 @@ exports.updateUserByID = async (req, res, next) => {
 // Request to Volunteer
 exports.sendVolunteerRequest = async (req, res, next) => {
   try {
-    const { userID, taskID } = req.params;
+    const { userID, taskID, email } = req.params;
 
     // Find User with the UserID
-    await User.findOne({ _id: userID }, async function(err, user) {
+    await User.findOne({ email: email }, async function(err, user) {
       if (err) {
         console.log("Error:", err);
       }
