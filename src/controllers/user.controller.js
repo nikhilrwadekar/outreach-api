@@ -245,15 +245,6 @@ exports.getAllRequestsFromVolunteers = async (req, res, next) => {
           volunteer_name: { $arrayElemAt: ["$user_docs.name", 0] }
         }
       }
-      // Group them in a particular fashion
-      // {
-      //   $group: {
-      //     _id: "$volunteers.opportunities._id",
-      //     tasks: { $first: { name: "$name" } },
-      //     location: { $first: "$location" },
-      //     requests: { $first: "$volunteers.opportunities.requests.received" }
-      //   }
-      // }
     ]);
     console.log("Sending all requests!");
     res.json(allRequestsFromVolunteers);
@@ -266,6 +257,33 @@ exports.getAllRequestsFromVolunteers = async (req, res, next) => {
 // ==== VOLUNTEER API CALLS ====
 // =============================
 
+// Get Opportunities (for Mobile Home)
+exports.getAllOpportunities = async (req, res, next) => {
+  try {
+    let allOpportunties = await ReliefCenter.aggregate([
+      // Unwind all opportunities
+      { $unwind: "$volunteers.opportunities" },
+
+      // Only pass on the following fields
+      {
+        $project: {
+          name: 1,
+          location: 1,
+          description: 1,
+          opportunity_id: "$volunteers.opportunities._id",
+          opportunity_date: "$volunteers.opportunities.date",
+          opportunity_type: "$volunteers.opportunities.type",
+          opportunity_time: "$volunteers.opportunities.time",
+          opportunity_required: "$volunteers.opportunities.required"
+        }
+      }
+    ]);
+    console.log("Sending all requests!");
+    res.json(allOpportunties);
+  } catch (error) {
+    next(error);
+  }
+};
 // Get Requests assigned/approved by Admin based on User Email
 exports.getAssignedOpportunitiesByUserEmail = async (req, res, next) => {
   try {
@@ -400,7 +418,6 @@ exports.getReceivedOpportunitiesByUserEmail = async (req, res, next) => {
 };
 
 // Suggest a random number of users
-
 exports.suggestRandomNumberOfVolunteers = async (req, res, next) => {
   const { number } = req.params;
 

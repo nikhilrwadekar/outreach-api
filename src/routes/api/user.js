@@ -13,10 +13,7 @@ const userController = require("../../controllers/user.controller");
 router.get("/suggest/:number", userController.suggestRandomNumberOfVolunteers);
 
 // Get All Opportunities
-router.get(
-  "/opportunities",
-  userController.getOpportunitiesGroupedByReliefCenter
-);
+router.get("/opportunities", userController.getAllOpportunities);
 
 // Routes for Users
 
