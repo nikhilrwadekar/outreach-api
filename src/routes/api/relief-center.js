@@ -26,4 +26,15 @@ router.get("/:name", reliefCenterController.getReliefCenterByName);
 // UPDATE Relief Center
 router.put("/id/:id", reliefCenterController.updateReliefCenterByID);
 
+// Approve Volunteer Request!
+router.post(
+  "/id/:taskID/:emailID",
+  reliefCenterController.approveVolunteerRequest
+);
+
+// Get Task Categorized and Total Count!
+router.get(
+  "/all/requirement",
+  reliefCenterController.getReliefCenterRequirements
+);
 module.exports = router;

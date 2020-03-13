@@ -9,7 +9,20 @@ const validator = require("express-validation");
 const userController = require("../../controllers/user.controller");
 // const { createUser } = require("../../validators/user");
 
+// Get All Opportunities
+router.get(
+  "/opportunities",
+  userController.getOpportunitiesGroupedByReliefCenter
+);
+
 // Routes for Users
+
+/* ========== ADMIN ROUTES ========== */
+
+router.get(
+  "/admin/requests/received",
+  userController.getAllRequestsFromVolunteers
+);
 
 // POST New User - Check if it exists based on it's name
 router.post("/create", userController.createUser);
