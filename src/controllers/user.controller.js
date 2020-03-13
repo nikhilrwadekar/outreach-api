@@ -270,6 +270,7 @@ exports.getAllOpportunities = async (req, res, next) => {
           name: 1,
           location: 1,
           description: 1,
+          picture_url: 1,
           opportunity_id: "$volunteers.opportunities._id",
           opportunity_date: "$volunteers.opportunities.date",
           opportunity_type: "$volunteers.opportunities.type",
