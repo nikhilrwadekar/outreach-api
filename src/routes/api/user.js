@@ -9,6 +9,9 @@ const validator = require("express-validation");
 const userController = require("../../controllers/user.controller");
 // const { createUser } = require("../../validators/user");
 
+// Suggest Random Volunteer(s)
+router.get("/suggest/:number", userController.suggestRandomNumberOfVolunteers);
+
 // Get All Opportunities
 router.get(
   "/opportunities",

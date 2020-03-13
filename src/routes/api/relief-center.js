@@ -37,4 +37,10 @@ router.get(
   "/all/requirement",
   reliefCenterController.getReliefCenterRequirements
 );
+
+// Get Task Categorized and Total Count!
+router.get(
+  "/id/:reliefCenterID/requirement",
+  reliefCenterController.getReliefCenterRequirementsByID
+);
 module.exports = router;

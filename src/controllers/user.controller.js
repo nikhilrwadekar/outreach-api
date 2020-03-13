@@ -221,6 +221,29 @@ exports.getAllRequestsFromVolunteers = async (req, res, next) => {
           end_time: "$volunteers.opportunities.time.end",
           volunteer_email: "$volunteers.opportunities.requests.received"
         }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "volunteer_email",
+          foreignField: "email",
+          as: "user_docs"
+        }
+      },
+      {
+        $project: {
+          // _id: 0,
+          relief_center_id: 1,
+          task_id: 1,
+          name: 1,
+          location: 1,
+          date: 1,
+          type: 1,
+          start_time: 1,
+          end_time: 1,
+          volunteer_email: 1,
+          volunteer_name: { $arrayElemAt: ["$user_docs.name", 0] }
+        }
       }
       // Group them in a particular fashion
       // {
@@ -374,4 +397,30 @@ exports.getReceivedOpportunitiesByUserEmail = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+// Suggest a random number of users
+
+exports.suggestRandomNumberOfVolunteers = async (req, res, next) => {
+  const { number } = req.params;
+
+  const users = await User.aggregate(
+    [
+      // { $project: { name: 1, password: 0 } },
+
+      { $match: { role: "volunteer" } }, // Get Volunteers Only
+      { $sample: { size: parseInt(number ? number : "1") } },
+      {
+        $project: {
+          name: 1,
+          email: 1
+        }
+      }
+    ],
+    (err, users) => {
+      if (err) next(err);
+    }
+  );
+
+  res.send(users);
 };
