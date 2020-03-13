@@ -9,6 +9,12 @@ const validator = require("express-validation");
 const userController = require("../../controllers/user.controller");
 // const { createUser } = require("../../validators/user");
 
+// Get All Opportunities
+router.get(
+  "/opportunities",
+  userController.getOpportunitiesGroupedByReliefCenter
+);
+
 // Routes for Users
 
 /* ========== ADMIN ROUTES ========== */
