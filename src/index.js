@@ -1,10 +1,35 @@
 //For example: Strict mode doesn't allow usage of undeclared variables
 "use strict";
 
-const mongoose = require("./services/mongoose");
-const app = require("./services/express");
+const mongoose = require("./services/mongoose"); //Get the Mongoose Service
+const app = require("./services/express"); // Get the Express App
+const http = require("http"); // Require the http module
+const socketIO = require("socket.io"); // Require the SOCKET.IO module
+const server = http.createServer(app); // our server instance
+const io = socketIO(server); // This creates our socket using the instance of the server
+io.set("origins", "*:*");
 
-app.start();
-mongoose.connect();
+// All Data Models
+const ReliefCenter = require("./models/relief-center.model");
+const User = require("./models/user.model");
+const Disaster = require("./models/disaster.model");
 
-module.exports = app;
+app.start(); // Start the Express App
+mongoose.connect(); // Connect to MongoDB with Mongoose
+
+const reliefCenterChangeStream = ReliefCenter.watch();
+
+reliefCenterChangeStream.on("change", change => {
+  console.log(change); // You could parse out the needed info and send only that data.
+  io.emit("reliefCenterDataChange", change);
+});
+
+io.on("connection", function() {
+  console.log("connected");
+});
+
+var socket = io;
+module.exports = socket;
+
+// Socket.io Server
+server.listen(5000, () => console.log(`Socket.io listening on port 5000`));

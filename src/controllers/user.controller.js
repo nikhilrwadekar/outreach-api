@@ -115,16 +115,16 @@ exports.sendVolunteerRequest = async (req, res, next) => {
                 task.requests.received.push(user.email);
                 // Save Relief Center!
                 reliefCenter.save();
-                res.status(httpStatus.OK);
-                res.json({ message: "Request has been sent!" });
+                // res.status(httpStatus.OK);
+                // res.json({ message: "Request has been sent!" });
               }
               // TODO: Add Status Code to indicate that the request cannot be completed.
-              res.json({ message: "Request has already been sent!" });
+              // res.json({ message: "Request has already been sent!" });
             } else {
-              res.status(httpStatus.NOT_FOUND);
-              res.json({
-                message: "Requested task was not found in any Relief Center!"
-              });
+              // res.status(httpStatus.NOT_FOUND);
+              // res.json({
+              //   message: "Requested task was not found in any Relief Center!"
+              // });
             }
           }
         );

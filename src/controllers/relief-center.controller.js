@@ -158,38 +158,19 @@ exports.approveVolunteerRequest = async (req, res, next) => {
   );
 };
 
-// Get Requirements Sorted by total Number of Volunteers Needed
-
-/*
-{
-  relief_center_id: _id,
-  name: "",
-  requirements: [
-    {
-      "task_type": "Cooking" ,
-      "required": "10"
-    },
-    {
-      "task_type": "Driving" ,
-      "required": "8"
-    },
-    {
-      "task_type": "Cleaning" ,
-      "required": "7"
-    }
-}
-*/
-
+// Get Requirements
 exports.getReliefCenterRequirements = async (req, res, next) => {
   try {
     let reliefCenterRequirements = await ReliefCenter.aggregate([
+      { $sort: { updatedAt: 1 } },
       { $unwind: "$volunteers.opportunities" },
       {
         $project: {
           relief_center_id: "$_id",
           name: 1,
           type: "$volunteers.opportunities.type",
-          required: "$volunteers.opportunities.required"
+          required: "$volunteers.opportunities.required",
+          updatedAt: "$updatedAt"
         }
       },
 
