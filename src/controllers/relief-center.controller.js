@@ -162,13 +162,15 @@ exports.approveVolunteerRequest = async (req, res, next) => {
 exports.getReliefCenterRequirements = async (req, res, next) => {
   try {
     let reliefCenterRequirements = await ReliefCenter.aggregate([
+      { $sort: { updatedAt: 1 } },
       { $unwind: "$volunteers.opportunities" },
       {
         $project: {
           relief_center_id: "$_id",
           name: 1,
           type: "$volunteers.opportunities.type",
-          required: "$volunteers.opportunities.required"
+          required: "$volunteers.opportunities.required",
+          updatedAt: "$updatedAt"
         }
       },
 
