@@ -61,4 +61,7 @@ router.get(
   userController.getReceivedOpportunitiesByUserEmail
 );
 
+// Opt out from task.
+router.post("/:email/optout/:taskID", userController.optOutFromTask);
+
 module.exports = router;

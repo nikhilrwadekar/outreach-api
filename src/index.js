@@ -24,8 +24,19 @@ reliefCenterChangeStream.on("change", change => {
   io.emit("reliefCenterDataChange", change);
 });
 
-io.on("connection", function() {
-  console.log("connected");
+// Update Broadcast!
+io.on("message", m => {
+  io.emit("message", m);
+  console.log(m);
+});
+
+io.on("connection", function(socket) {
+  console.log("Connected to Client Socket!");
+
+  // Handle Broadcasts from Admin - forward it to all clients!
+  socket.on("broadcastMessage", function(message) {
+    io.emit("broadcastMessage", { broadcast: message });
+  });
 });
 
 var socket = io;
