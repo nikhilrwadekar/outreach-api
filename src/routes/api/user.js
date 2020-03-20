@@ -18,6 +18,10 @@ router.get("/opportunities", userController.getAllOpportunities);
 // Routes for Users
 
 /* ========== ADMIN ROUTES ========== */
+router.get(
+  "/admin/request/:email/:taskID",
+  userController.requestUserToVolunteerForTask
+);
 
 router.get(
   "/admin/requests/received",
