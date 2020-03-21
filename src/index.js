@@ -20,7 +20,7 @@ mongoose.connect(); // Connect to MongoDB with Mongoose
 const reliefCenterChangeStream = ReliefCenter.watch();
 
 reliefCenterChangeStream.on("change", change => {
-  console.log(change); // You could parse out the needed info and send only that data.
+  console.log("Relief Center Data was changed..");
   io.emit("reliefCenterDataChange", change);
 });
 
