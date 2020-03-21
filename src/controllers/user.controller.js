@@ -497,3 +497,40 @@ exports.suggestRandomNumberOfVolunteers = async (req, res, next) => {
 
   res.send(users);
 };
+
+// Opt out from a task
+exports.optOutFromTask = async (req, res, next) => {
+  try {
+    const { email, taskID } = req.params;
+    // Find Relief Center that has the task with taskID
+    await ReliefCenter.findOne(
+      { "volunteers.opportunities._id": taskID },
+      async function(err, reliefCenter) {
+        if (err) next(err);
+
+        // If Relief Center is found..
+        if (reliefCenter) {
+          // Get the concerned Task from the Relief Center
+          let task = await reliefCenter.volunteers.opportunities.id(taskID);
+
+          // Add User's has been assigned
+          if (task.assigned.includes(email)) {
+            // Pop User's ID from assigned
+            task.assigned.pop(email);
+            // Save Relief Center!
+            reliefCenter.save();
+            res.status(httpStatus.OK);
+            res.json({ message: "User successfully opted out!" });
+          }
+          // TODO: Add Status Code to indicate that the request cannot be completed.
+          res.json({ message: "Already opted out!" });
+        } else {
+          res.status(httpStatus.NOT_FOUND);
+          res.json({
+            message: "Requested task was not found in any Relief Center!"
+          });
+        }
+      }
+    );
+  } catch (error) {}
+};
