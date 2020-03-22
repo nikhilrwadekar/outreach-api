@@ -117,9 +117,10 @@ exports.sendVolunteerRequest = async (req, res, next) => {
                 reliefCenter.save();
                 res.status(httpStatus.OK);
                 res.json({ message: "Request has been sent!" });
+              } else {
+                // TODO: Add Status Code to indicate that the request cannot be completed.
+                res.json({ message: "Request has already been sent!" });
               }
-              // TODO: Add Status Code to indicate that the request cannot be completed.
-              res.json({ message: "Request has already been sent!" });
             } else {
               res.status(httpStatus.NOT_FOUND);
               res.json({
@@ -285,9 +286,10 @@ exports.requestUserToVolunteerForTask = async (req, res, next) => {
                 reliefCenter.save();
                 res.status(httpStatus.OK);
                 res.json({ message: "Request has been sent!" });
+              } else {
+                // TODO: Add Status Code to indicate that the request cannot be completed.
+                res.json({ message: "Request has already been sent!" });
               }
-              // TODO: Add Status Code to indicate that the request cannot be completed.
-              res.json({ message: "Request has already been sent!" });
             } else {
               res.status(httpStatus.NOT_FOUND);
               res.json({

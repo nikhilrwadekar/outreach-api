@@ -145,9 +145,10 @@ exports.approveVolunteerRequest = async (req, res, next) => {
 
           res.status(httpStatus.OK);
           res.json({ message: "Request has been approved!" });
+        } else {
+          // TODO: Add Status Code to indicate that the request cannot be completed.
+          res.json({ message: "Request could not be approved!" });
         }
-        // TODO: Add Status Code to indicate that the request cannot be completed.
-        res.json({ message: "Request could not be approved!" });
       } else {
         res.status(httpStatus.NOT_FOUND);
         res.json({
