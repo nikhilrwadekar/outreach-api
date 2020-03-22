@@ -522,9 +522,10 @@ exports.optOutFromTask = async (req, res, next) => {
             res
               .status(httpStatus.OK)
               .json({ message: "User successfully opted out!" });
+          } else {
+            // TODO: Add Status Code to indicate that the request cannot be completed.
+            res.json({ message: "Already opted out!" });
           }
-          // TODO: Add Status Code to indicate that the request cannot be completed.
-          res.json({ message: "Already opted out!" });
         } else {
           res.status(httpStatus.NOT_FOUND).json({
             message: "Requested task was not found in any Relief Center!"
