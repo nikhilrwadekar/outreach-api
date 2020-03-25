@@ -1,6 +1,7 @@
 // Get The Model
 const User = require("../models/user.model");
 const ReliefCenter = require("../models/relief-center.model");
+const mongoose = require("mongoose");
 // Get Config
 const config = require("../config");
 
@@ -333,6 +334,14 @@ exports.getAllOpportunities = async (req, res, next) => {
           opportunity_required: "$volunteers.opportunities.required",
           opportunity_assigned: "$volunteers.opportunities.assigned",
           opportunity_requested: "$volunteers.opportunities.requests.received"
+        }
+      },
+      // Only return those which have True Dates
+      {
+        $match: {
+          opportunity_date: {
+            $gte: new Date()
+          }
         }
       }
     ]);

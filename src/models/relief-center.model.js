@@ -47,5 +47,16 @@ const reliefCenterSchema = new mongoose.Schema(
   }
 );
 
+// Before saving/updating the Relief Center..
+// reliefCenterSchema.pre("save", function(next) {
+//   var reliefCenter = this;
+
+//   // only hash the password if it has been modified (or is new)
+//   if (!reliefCenter.isModified("opportunities")) return next();
+
+//   // Assigned < Total Needed!
+//   else reliefCenter.opportunities.
+// });
+
 //Export the model
 module.exports = mongoose.model("ReliefCenter", reliefCenterSchema);
