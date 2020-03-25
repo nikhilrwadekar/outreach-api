@@ -163,12 +163,21 @@ exports.approveVolunteerRequest = async (req, res, next) => {
 exports.getReliefCenterRequirements = async (req, res, next) => {
   try {
     let reliefCenterRequirements = await ReliefCenter.aggregate([
+      // Unwind all opportunities
       { $unwind: "$volunteers.opportunities" },
+
+      // Project each as: Relief Center ID, Name, Type (Job), Number Required, Updated At
       {
         $project: {
+          task_id: "$volunteers.opportunities._id",
           relief_center_id: "$_id",
           name: 1,
           type: "$volunteers.opportunities.type",
+          assigned: { $size: "$volunteers.opportunities.assigned" },
+          volunteer_requests: {
+            $size: "$volunteers.opportunities.requests.received"
+          },
+          admin_requests: { $size: "$volunteers.opportunities.requests.sent" },
           required: "$volunteers.opportunities.required",
           updatedAt: "$updatedAt"
         }
@@ -181,6 +190,10 @@ exports.getReliefCenterRequirements = async (req, res, next) => {
             type: "$type"
           },
           required: { $sum: "$required" },
+          assigned: { $sum: "$assigned" },
+          volunteer_requests: { $sum: "$volunteer_requests" },
+          admin_requests: { $sum: "$admin_requests" },
+
           relief_center_id: { $first: "$relief_center_id" }
         }
       },
@@ -191,6 +204,9 @@ exports.getReliefCenterRequirements = async (req, res, next) => {
           name: "$_id.name",
           type: "$_id.type",
           required: 1,
+          assigned: 1,
+          volunteer_requests: 1,
+          admin_requests: 1,
           relief_center_id: 1,
           updatedAt: "$updatedAt"
         }
@@ -199,7 +215,15 @@ exports.getReliefCenterRequirements = async (req, res, next) => {
         $group: {
           _id: "$relief_center_id",
           name: { $first: "$name" },
-          required: { $push: { type: "$type", total: "$required" } }
+          required: {
+            $push: {
+              type: "$type",
+              total_capacity: "$required",
+              assigned: "$assigned",
+              volunteer_requests: "$volunteer_requests",
+              admin_requests: "$admin_requests"
+            }
+          }
         }
       },
       { $sort: { _id: -1 } }
@@ -218,12 +242,21 @@ exports.getReliefCenterRequirementsByID = async (req, res, next) => {
     let reliefCenterRequirements = await ReliefCenter.aggregate([
       { $match: { _id: mongoose.Types.ObjectId(reliefCenterID) } },
       { $unwind: "$volunteers.opportunities" },
+
+      // Project each as: Relief Center ID, Name, Type (Job), Number Required, Updated At
       {
         $project: {
+          task_id: "$volunteers.opportunities._id",
           relief_center_id: "$_id",
           name: 1,
           type: "$volunteers.opportunities.type",
-          required: "$volunteers.opportunities.required"
+          assigned: { $size: "$volunteers.opportunities.assigned" },
+          volunteer_requests: {
+            $size: "$volunteers.opportunities.requests.received"
+          },
+          admin_requests: { $size: "$volunteers.opportunities.requests.sent" },
+          required: "$volunteers.opportunities.required",
+          updatedAt: "$updatedAt"
         }
       },
 
@@ -234,6 +267,10 @@ exports.getReliefCenterRequirementsByID = async (req, res, next) => {
             type: "$type"
           },
           required: { $sum: "$required" },
+          assigned: { $sum: "$assigned" },
+          volunteer_requests: { $sum: "$volunteer_requests" },
+          admin_requests: { $sum: "$admin_requests" },
+
           relief_center_id: { $first: "$relief_center_id" }
         }
       },
@@ -244,14 +281,26 @@ exports.getReliefCenterRequirementsByID = async (req, res, next) => {
           name: "$_id.name",
           type: "$_id.type",
           required: 1,
-          relief_center_id: 1
+          assigned: 1,
+          volunteer_requests: 1,
+          admin_requests: 1,
+          relief_center_id: 1,
+          updatedAt: "$updatedAt"
         }
       },
       {
         $group: {
           _id: "$relief_center_id",
           name: { $first: "$name" },
-          required: { $push: { type: "$type", total: "$required" } }
+          required: {
+            $push: {
+              type: "$type",
+              total_capacity: "$required",
+              assigned: "$assigned",
+              volunteer_requests: "$volunteer_requests",
+              admin_requests: "$admin_requests"
+            }
+          }
         }
       }
     ]);

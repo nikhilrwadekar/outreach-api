@@ -1,3 +1,6 @@
+// Get the User Model
+const User = require("../models/user.model");
+
 // Token Model
 const Token = require("../models/refresh-token.model");
 
@@ -12,9 +15,7 @@ const jwt = require("jsonwebtoken");
 
 // Generate Token Function
 const generateAccessToken = data =>
-  jwt.sign(data, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: "60s"
-  });
+  jwt.sign(data, process.env.ACCESS_TOKEN_SECRET);
 
 exports.authenticateToken = (req, res, next) => {
   // Get Auth Header
@@ -76,49 +77,48 @@ exports.generateAccessTokenWithRefreshToken = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
+  // Get Email & Password from Request
   const { email, password } = req.body;
 
   try {
-    var userInDB = await User.findOne({ email: email }).exec();
+    // Find the user with the Email provided in DB
+    var userInDB = await User.findOne({ email: email });
+
+    // If User isn't found, return with 400
     if (!userInDB) {
       return res.status(400).send({ message: "The email does not exist" });
     }
-    if (!Bcrypt.compareSync(password, userInDB.password)) {
+
+    // If password doesn't match, return with 400
+    else if (!Bcrypt.compareSync(password, userInDB.password)) {
       return res.status(400).send({ message: "The password is invalid" });
     }
-    res.send({
-      message: "The email and password combination is correct!"
-    });
+
+    // If User email and Password match, continue to provide the Access Token!
+    else {
+      // Make the User Object
+      const user = { email: email, password: password };
+      const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET); //Generate Access Token
+      const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET); //Generate Refresh Token
+
+      // Save the refresh token in the Token collection along with the user's Email
+      const newToken = new Token({
+        token: refreshToken,
+        email: email
+      });
+
+      const refreshTokenInDB = await newToken.save();
+
+      if (!!accessToken && !!refreshTokenInDB)
+        res.status(200).json({
+          accessToken: accessToken,
+          refreshToken: refreshTokenInDB.token,
+          message: "Successfully signed in!"
+        });
+    }
   } catch (error) {
-    res.status(500).send(error);
+    res
+      .status(500)
+      .send({ message: "Sorry, something went wrong", error: error });
   }
-
-  const user = { email: email, password: password };
-
-  const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: "15s"
-  });
-
-  // ####################
-  // Push the refreshToken in the DB -- AWAIT
-  // ####################
-  const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET);
-
-  // Take the data from Request, Use the Model to create the entry
-  const newToken = new Token({
-    token: refreshToken,
-    email: email
-  });
-
-  // Save the entry into MongoDB
-  const refreshTokenInDB = await newToken.save();
-
-  if (refreshTokenInDB)
-    // Send the Access Token on successful login!
-    res.json({
-      accessToken: accessToken,
-      refreshToken: refreshTokenInDB.token
-    });
-
-  res.sendStatus(500);
 };
