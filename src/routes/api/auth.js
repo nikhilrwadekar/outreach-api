@@ -19,4 +19,7 @@ router.post("/token", authController.generateAccessTokenWithRefreshToken);
 
 //Logout User - Remove the refresh token from the DB
 // router.delete("/logout");
+
+// Twitter Auth
+router.post("/twitter", authController.twitterLogin);
 module.exports = router;

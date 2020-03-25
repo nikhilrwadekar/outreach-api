@@ -9,20 +9,27 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 // const errorHandler = require("../middlewares/error-handler");
 const apiRouter = require("../routes/api");
+// const session = require("express-session");
+const passport = require("passport");
+const passportJwt = require("../services/passport");
+const helmet = require("helmet");
 
-const jwt = require("jsonwebtoken");
-
-// Make a new Express App
 const app = express();
-// app.use(bodyParser.json());
+
 app.use(express.json());
 app.use(cors());
+app.use(helmet());
+
+// passport
+app.use(passport.initialize());
+passport.use("jwt", passportJwt.jwt);
 
 // API Routes
 app.use("/api", apiRouter);
 // app.use(errorHandler.handleNotFound);
 // app.use(errorHandler.handleError);
 
+// Start Server
 exports.start = () => {
   app.listen(config.port, err => {
     if (err) {
