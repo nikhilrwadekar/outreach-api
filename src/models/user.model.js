@@ -48,8 +48,8 @@ var userSchema = new mongoose.Schema(
     },
     contact_number: {
       type: Number,
-      required: false,
-      unique: true
+      required: false
+      // unique: true
     },
     role: {
       type: String,
