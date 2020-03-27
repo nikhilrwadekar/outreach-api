@@ -459,23 +459,23 @@ exports.getReceivedOpportunitiesByUserEmail = async (req, res, next) => {
         $project: {
           name: 1,
           location: 1,
-          "volunteers.opportunities._id": 1,
-          "volunteers.opportunities.date": 1,
-          "volunteers.opportunities.type": 1,
-          "volunteers.opportunities.time": 1
-        }
-      },
-      // Group them in a particular fashion
-      {
-        $group: {
-          _id: "$_id",
-          name: { $first: "$name" },
-          location: { $first: "$location" },
-          requests: { $push: "$volunteers.opportunities" }
+          job_type: "$volunteers.opportunities.type",
+          job_id: "$volunteers.opportunities._id",
+          job_date: "$volunteers.opportunities.date",
+          job_start_time: "$volunteers.opportunities.time.start",
+          job_end_time: "$volunteers.opportunities.time.end"
         }
       }
-
-      //Second Try
+      // DONT COMMENT THE ONES BELOW - You almost banged your head on the wall learning it.. ;-;
+      // // Group them in a particular fashion
+      // {
+      //   $group: {
+      //     _id: "$_id",
+      //     name: { $first: "$name" },
+      //     location: { $first: "$location" },
+      //     requests: { $push: "$volunteers.opportunities" }
+      //   }
+      // }
     ]);
 
     res.json(getUserRequestsSendFromAdmin);
