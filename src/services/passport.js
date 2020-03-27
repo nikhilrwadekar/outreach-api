@@ -1,31 +1,44 @@
-"use strict";
+const LocalStrategy = require("passport-local").Strategy;
 
-const config = require("../config");
 const User = require("../models/user.model");
-const passportJWT = require("passport-jwt");
 
-const ExtractJwt = passportJWT.ExtractJwt;
-const JwtStrategy = passportJWT.Strategy;
+module.exports = passport => {
+  passport.use(
+    // Change default username field to 'email'
+    new LocalStrategy({ usernameField: "email" }, (email, password, done) => {
+      // Match User
+      User.findOne({ email: email })
+        .then(user => {
+          // Match User Email
+          if (!user) {
+            return done(null, false, {
+              message: "That email is not registered!"
+            });
+          }
+          // Match Hashed Password
+          user.comparePassword(password, (err, isMatch) => {
+            if (err) throw err;
 
-const jwtOptions = {
-  secretOrKey: config.secret,
-  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
-};
+            if (isMatch) {
+              return done(null, user);
+            } else {
+              return done(null, false, { message: "Password incorrect." });
+            }
+          });
+        })
+        .catch(err => console.log(err));
+    })
+  );
 
-const jwtStrategy = new JwtStrategy(jwtOptions, (jwtPayload, done) => {
-  console.log(jwtPayload);
-  User.findOne({ email: jwtPayload.email }, (err, user) => {
-    if (err) {
-      return done(err, null);
-    }
-
-    if (user) {
-      return done(null, user);
-    } else {
-      return done(null, false);
-    }
+  passport.serializeUser((user, done) => {
+    console.log("Serializing...");
+    done(null, user.id);
   });
-});
 
-exports.jwtOptions = jwtOptions;
-exports.jwt = jwtStrategy;
+  passport.deserializeUser((id, done) => {
+    console.log("DeSerializing...");
+    User.findById(id, (err, user) => {
+      done(err, user);
+    });
+  });
+};
