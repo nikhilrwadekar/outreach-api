@@ -48,7 +48,7 @@ exports.getUserByEmail = async (req, res, next) => {
   try {
     const { email } = req.params; // Get the Email from Params
 
-    const user = await User.find({ email: email }).select("-password"); // Find One by Name
+    const user = await User.findOne({ email: email }).select("-password"); // Find One by Name
     return res.json(user); // Return the User
   } catch (error) {
     next(error);
