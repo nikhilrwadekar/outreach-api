@@ -48,7 +48,7 @@ exports.getUserByEmail = async (req, res, next) => {
   try {
     const { email } = req.params; // Get the Email from Params
 
-    const user = await User.find({ email: email }).select("-password"); // Find One by Name
+    const user = await User.findOne({ email: email }).select("-password"); // Find One by Name
     return res.json(user); // Return the User
   } catch (error) {
     next(error);
@@ -371,21 +371,22 @@ exports.getAssignedOpportunitiesByUserEmail = async (req, res, next) => {
         $project: {
           name: 1,
           location: 1,
-          "volunteers.opportunities._id": 1,
-          "volunteers.opportunities.date": 1,
-          "volunteers.opportunities.type": 1,
-          "volunteers.opportunities.time": 1
-        }
-      },
-      // Group them in a particular fashion
-      {
-        $group: {
-          _id: "$_id",
-          name: { $first: "$name" },
-          location: { $first: "$location" },
-          tasks: { $push: "$volunteers.opportunities" }
+          job_type: "$volunteers.opportunities.type",
+          job_id: "$volunteers.opportunities._id",
+          job_date: "$volunteers.opportunities.date",
+          job_start_time: "$volunteers.opportunities.time.start",
+          job_end_time: "$volunteers.opportunities.time.end"
         }
       }
+      // Group them in a particular fashion
+      // {
+      //   $group: {
+      //     _id: "$_id",
+      //     name: { $first: "$name" },
+      //     location: { $first: "$location" },
+      //     tasks: { $push: "$volunteers.opportunities" }
+      //   }
+      // }
     ]);
 
     res.json(getUserAssignedTasks);
@@ -459,23 +460,23 @@ exports.getReceivedOpportunitiesByUserEmail = async (req, res, next) => {
         $project: {
           name: 1,
           location: 1,
-          "volunteers.opportunities._id": 1,
-          "volunteers.opportunities.date": 1,
-          "volunteers.opportunities.type": 1,
-          "volunteers.opportunities.time": 1
-        }
-      },
-      // Group them in a particular fashion
-      {
-        $group: {
-          _id: "$_id",
-          name: { $first: "$name" },
-          location: { $first: "$location" },
-          requests: { $push: "$volunteers.opportunities" }
+          job_type: "$volunteers.opportunities.type",
+          job_id: "$volunteers.opportunities._id",
+          job_date: "$volunteers.opportunities.date",
+          job_start_time: "$volunteers.opportunities.time.start",
+          job_end_time: "$volunteers.opportunities.time.end"
         }
       }
-
-      //Second Try
+      // DONT COMMENT THE ONES BELOW - You almost banged your head on the wall learning it.. ;-;
+      // // Group them in a particular fashion
+      // {
+      //   $group: {
+      //     _id: "$_id",
+      //     name: { $first: "$name" },
+      //     location: { $first: "$location" },
+      //     requests: { $push: "$volunteers.opportunities" }
+      //   }
+      // }
     ]);
 
     res.json(getUserRequestsSendFromAdmin);
@@ -536,6 +537,89 @@ exports.optOutFromTask = async (req, res, next) => {
           } else {
             // TODO: Add Status Code to indicate that the request cannot be completed.
             res.json({ message: "Already opted out!" });
+          }
+        } else {
+          res.status(httpStatus.NOT_FOUND).json({
+            message: "Requested task was not found in any Relief Center!"
+          });
+        }
+      }
+    );
+  } catch (error) {}
+};
+
+// Opt out from a task
+exports.optInToTask = async (req, res, next) => {
+  try {
+    const { email, taskID } = req.params;
+    // Find Relief Center that has the task with taskID
+    await ReliefCenter.findOne(
+      { "volunteers.opportunities._id": taskID },
+      async function(err, reliefCenter) {
+        if (err) next(err);
+
+        // If Relief Center is found..
+        if (reliefCenter) {
+          // Get the concerned Task from the Relief Center
+          let task = await reliefCenter.volunteers.opportunities.id(taskID);
+
+          // Add User's has been requests.sent
+          if (task.requests.sent.includes(email)) {
+            // Pop User's ID from requests.sent
+            task.requests.sent.pop(email);
+
+            // Add it to assigned!
+            task.assigned.push(email);
+
+            // Save Relief Center!
+            reliefCenter.save();
+            res
+              .status(httpStatus.OK)
+              .json({ message: "User successfully opted in!" });
+          } else {
+            // TODO: Add Status Code to indicate that the request cannot be completed.
+            res.json({ message: "Already opted in!" });
+          }
+        } else {
+          res.status(httpStatus.NOT_FOUND).json({
+            message: "Requested task was not found in any Relief Center!"
+          });
+        }
+      }
+    );
+  } catch (error) {}
+};
+
+// Decline a task
+exports.declineTask = async (req, res, next) => {
+  try {
+    const { email, taskID } = req.params;
+    // Find Relief Center that has the task with taskID
+    await ReliefCenter.findOne(
+      { "volunteers.opportunities._id": taskID },
+      async function(err, reliefCenter) {
+        if (err) next(err);
+
+        // If Relief Center is found..
+        if (reliefCenter) {
+          // Get the concerned Task from the Relief Center
+          let task = await reliefCenter.volunteers.opportunities.id(taskID);
+
+          // Add User's has been requests.sent
+          if (task.requests.sent.includes(email)) {
+            // Pop User's ID from requests.sent
+            task.requests.sent.pop(email);
+
+            // Won't be assigned, as declined..
+
+            // Save Relief Center!
+            reliefCenter.save();
+            res
+              .status(httpStatus.OK)
+              .json({ message: "User successfully declined task!" });
+          } else {
+            // TODO: Add Status Code to indicate that the request cannot be completed.
+            res.json({ message: "Already declined!" });
           }
         } else {
           res.status(httpStatus.NOT_FOUND).json({

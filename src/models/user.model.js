@@ -5,6 +5,9 @@ const SALT_WORK_FACTOR = 10;
 // User Roles
 const roles = ["volunteer", "admin"];
 
+// User Types
+const types = ["email", "facebook", "google"];
+
 // Availabilities
 const availabilities = ["anytime", "preferred"];
 
@@ -30,6 +33,11 @@ var userSchema = new mongoose.Schema(
       required: true,
       unique: false
     },
+    type: {
+      type: String,
+      default: "email",
+      enum: types
+    },
     email: {
       type: String,
       required: true,
@@ -38,8 +46,14 @@ var userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
-      minlength: 4,
+      required: function() {
+        return this.type === "email";
+      }, // Only required if role equals 'volunteer'
+      // minlength: function() {
+      //   if (this.type === "email") return 5;
+
+      //   // return 0;
+      // },
       maxlength: 128
     },
     profile_picture_url: {
@@ -48,19 +62,13 @@ var userSchema = new mongoose.Schema(
     },
     contact_number: {
       type: Number,
-      required: false,
-      unique: true
+      required: false
+      // unique: true
     },
     role: {
       type: String,
       default: "volunteer",
       enum: roles
-    },
-    tasks: {
-      type: [taskSchema],
-      required: function() {
-        return this.role === "volunteer";
-      } // Only required if role equals 'volunteer'
     },
 
     address: {
