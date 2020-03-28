@@ -9,6 +9,10 @@ const server = http.createServer(app); // our server instance
 const io = socketIO(server); // This creates our socket using the instance of the server
 io.set("origins", "*:*");
 
+// var app = require('express')();
+// var http = require('http').createServer(app);
+// var io = require('socket.io')(http);
+
 // All Data Models
 const ReliefCenter = require("./models/relief-center.model");
 const User = require("./models/user.model");
@@ -26,8 +30,8 @@ reliefCenterChangeStream.on("change", change => {
 
 // Update Broadcast!
 io.on("message", m => {
-  io.emit("message", m);
-  console.log(m);
+  // io.emit("message", m);
+  // console.log(m);
 });
 
 io.on("connection", function(socket) {
