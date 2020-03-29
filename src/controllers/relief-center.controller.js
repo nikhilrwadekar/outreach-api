@@ -10,9 +10,6 @@ const config = require("../config");
 // HTTP Status - Handling HTTP Status Codes Made Easier
 const httpStatus = require("http-status");
 
-// UUID for IDs
-// const uuidv1 = require("uuid/v1");
-
 // Get All Relief Centers
 exports.getAllReliefCenters = async (req, res, next) => {
   try {
@@ -159,6 +156,47 @@ exports.approveVolunteerRequest = async (req, res, next) => {
   );
 };
 
+exports.declineVolunteerRequest = async (req, res, next) => {
+  // Get Task ID and Email ID from the request!
+  const { taskID, emailID } = req.params;
+
+  // Find Relief Center that has the task with taskID
+  await ReliefCenter.findOne(
+    { "volunteers.opportunities._id": taskID },
+    async function(err, reliefCenter) {
+      if (err) next(err);
+
+      // If Relief Center is found..
+      if (reliefCenter) {
+        // Get the concerned Task from the Relief Center
+        let task = await reliefCenter.volunteers.opportunities.id(taskID);
+
+        // Add User's Request - if it hasnt been added already
+        if (task.requests.received.includes(emailID)) {
+          // Remove User's Email from requests. (Decline Request)
+          task.requests.received.pull(emailID);
+
+          // Save Relief Center!
+          reliefCenter.save();
+
+          res.status(httpStatus.OK);
+          res.json({ message: "Request has been declined!" });
+        } else {
+          // TODO: Add Status Code to indicate that the request cannot be completed.
+          res.json({
+            message: "Request could not be declined! Does not exist"
+          });
+        }
+      } else {
+        res.status(httpStatus.NOT_FOUND);
+        res.json({
+          message: "Requested task was not found in any Relief Center!"
+        });
+      }
+    }
+  );
+};
+
 // Get Requirements
 exports.getReliefCenterRequirements = async (req, res, next) => {
   try {
@@ -179,7 +217,8 @@ exports.getReliefCenterRequirements = async (req, res, next) => {
           },
           admin_requests: { $size: "$volunteers.opportunities.requests.sent" },
           required: "$volunteers.opportunities.required",
-          updatedAt: "$updatedAt"
+          updatedAt: "$updatedAt",
+          createdAt: "$createdAt"
         }
       },
 
@@ -193,8 +232,9 @@ exports.getReliefCenterRequirements = async (req, res, next) => {
           assigned: { $sum: "$assigned" },
           volunteer_requests: { $sum: "$volunteer_requests" },
           admin_requests: { $sum: "$admin_requests" },
-
-          relief_center_id: { $first: "$relief_center_id" }
+          relief_center_id: { $first: "$relief_center_id" },
+          updatedAt: { $first: "$updatedAt" },
+          createdAt: { $first: "$createdAt" }
         }
       },
 
@@ -208,13 +248,16 @@ exports.getReliefCenterRequirements = async (req, res, next) => {
           volunteer_requests: 1,
           admin_requests: 1,
           relief_center_id: 1,
-          updatedAt: "$updatedAt"
+          updatedAt: "$updatedAt",
+          createdAt: "$createdAt"
         }
       },
       {
         $group: {
           _id: "$relief_center_id",
           name: { $first: "$name" },
+          updatedAt: { $first: "$updatedAt" },
+          createdAt: { $first: "$createdAt" },
           required: {
             $push: {
               type: "$type",

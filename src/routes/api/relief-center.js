@@ -32,6 +32,12 @@ router.post(
   reliefCenterController.approveVolunteerRequest
 );
 
+// Decline Volunteer Request!
+router.post(
+  "/id/:taskID/:emailID/decline",
+  reliefCenterController.declineVolunteerRequest
+);
+
 // Get Task Categorized and Total Count!
 router.get(
   "/all/requirement",
