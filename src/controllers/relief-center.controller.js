@@ -3,15 +3,12 @@ const mongoose = require("mongoose");
 
 // Get The Model
 const ReliefCenter = require("../models/relief-center.model");
-
+const User = require("../models/user.model");
 // Get Config
 const config = require("../config");
 
 // HTTP Status - Handling HTTP Status Codes Made Easier
 const httpStatus = require("http-status");
-
-// UUID for IDs
-// const uuidv1 = require("uuid/v1");
 
 // Get All Relief Centers
 exports.getAllReliefCenters = async (req, res, next) => {
@@ -159,7 +156,48 @@ exports.approveVolunteerRequest = async (req, res, next) => {
   );
 };
 
-// Get Requirements
+exports.declineVolunteerRequest = async (req, res, next) => {
+  // Get Task ID and Email ID from the request!
+  const { taskID, emailID } = req.params;
+
+  // Find Relief Center that has the task with taskID
+  await ReliefCenter.findOne(
+    { "volunteers.opportunities._id": taskID },
+    async function(err, reliefCenter) {
+      if (err) next(err);
+
+      // If Relief Center is found..
+      if (reliefCenter) {
+        // Get the concerned Task from the Relief Center
+        let task = await reliefCenter.volunteers.opportunities.id(taskID);
+
+        // Add User's Request - if it hasnt been added already
+        if (task.requests.received.includes(emailID)) {
+          // Remove User's Email from requests. (Decline Request)
+          task.requests.received.pull(emailID);
+
+          // Save Relief Center!
+          reliefCenter.save();
+
+          res.status(httpStatus.OK);
+          res.json({ message: "Request has been declined!" });
+        } else {
+          // TODO: Add Status Code to indicate that the request cannot be completed.
+          res.json({
+            message: "Request could not be declined! Does not exist"
+          });
+        }
+      } else {
+        res.status(httpStatus.NOT_FOUND);
+        res.json({
+          message: "Requested task was not found in any Relief Center!"
+        });
+      }
+    }
+  );
+};
+
+// Get Requirements for Relief Center (Summed Up Count)
 exports.getReliefCenterRequirements = async (req, res, next) => {
   try {
     let reliefCenterRequirements = await ReliefCenter.aggregate([
@@ -179,7 +217,8 @@ exports.getReliefCenterRequirements = async (req, res, next) => {
           },
           admin_requests: { $size: "$volunteers.opportunities.requests.sent" },
           required: "$volunteers.opportunities.required",
-          updatedAt: "$updatedAt"
+          updatedAt: "$updatedAt",
+          createdAt: "$createdAt"
         }
       },
 
@@ -193,8 +232,9 @@ exports.getReliefCenterRequirements = async (req, res, next) => {
           assigned: { $sum: "$assigned" },
           volunteer_requests: { $sum: "$volunteer_requests" },
           admin_requests: { $sum: "$admin_requests" },
-
-          relief_center_id: { $first: "$relief_center_id" }
+          relief_center_id: { $first: "$relief_center_id" },
+          updatedAt: { $first: "$updatedAt" },
+          createdAt: { $first: "$createdAt" }
         }
       },
 
@@ -208,13 +248,16 @@ exports.getReliefCenterRequirements = async (req, res, next) => {
           volunteer_requests: 1,
           admin_requests: 1,
           relief_center_id: 1,
-          updatedAt: "$updatedAt"
+          updatedAt: "$updatedAt",
+          createdAt: "$createdAt"
         }
       },
       {
         $group: {
           _id: "$relief_center_id",
           name: { $first: "$name" },
+          updatedAt: { $first: "$updatedAt" },
+          createdAt: { $first: "$createdAt" },
           required: {
             $push: {
               type: "$type",
@@ -226,6 +269,59 @@ exports.getReliefCenterRequirements = async (req, res, next) => {
           }
         }
       },
+      { $sort: { _id: -1 } }
+    ]);
+
+    res.json(reliefCenterRequirements);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get Tasks for a Relief Center
+exports.getReliefCenterTasksByID = async (req, res, next) => {
+  try {
+    const { reliefCenterID } = req.params;
+    let reliefCenterRequirements = await ReliefCenter.aggregate([
+      { $match: { _id: mongoose.Types.ObjectId(reliefCenterID) } },
+
+      // Unwind all opportunities
+      { $unwind: "$volunteers.opportunities" },
+
+      // Project each as: Relief Center ID, Name, Type (Job), Number Required, Updated At
+      {
+        $project: {
+          task_id: "$volunteers.opportunities._id",
+          relief_center_id: "$_id",
+          name: 1,
+          type: "$volunteers.opportunities.type",
+          assigned_total: { $size: "$volunteers.opportunities.assigned" },
+          volunteer_requests_total: {
+            $size: "$volunteers.opportunities.requests.received"
+          },
+          requests_sent_by_admin_total: {
+            $size: "$volunteers.opportunities.requests.sent"
+          },
+          total_capacity: "$volunteers.opportunities.required",
+
+          assigned: "$volunteers.opportunities.assigned",
+          volunteer_requests: "$volunteers.opportunities.requests.received",
+          requests_sent_by_admin: "$volunteers.opportunities.requests.sent",
+          date: "$volunteers.opportunities.date",
+          start_time: "$volunteers.opportunities.time.start",
+          end_time: "$volunteers.opportunities.time.end",
+          volunteers_linked: {
+            $concatArrays: [
+              "$volunteers.opportunities.requests.received",
+              "$volunteers.opportunities.requests.sent",
+              "$volunteers.opportunities.assigned"
+            ]
+          },
+          updatedAt: "$updatedAt",
+          createdAt: "$createdAt"
+        }
+      },
+
       { $sort: { _id: -1 } }
     ]);
 
@@ -309,4 +405,66 @@ exports.getReliefCenterRequirementsByID = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+// Get Assigned Volunteers for a Task
+
+exports.getAssignedVolunteersByTaskID = async (req, res, next) => {
+  // Get Task ID and Email ID from the request!
+  const { taskID, volunteersListType } = req.params;
+
+  // Find Relief Center that has the task with taskID
+  await ReliefCenter.findOne(
+    { "volunteers.opportunities._id": taskID },
+    async function(err, reliefCenter) {
+      if (err) next(err);
+
+      // If Relief Center is found..
+      if (reliefCenter) {
+        // Get the concerned Task from the Relief Center
+        let task = await reliefCenter.volunteers.opportunities.id(taskID);
+
+        // Send Back Assigned List
+        res.status(httpStatus.OK);
+
+        // Send Assigned
+        if (volunteersListType == "assigned") {
+          const assignedVolunteers = await User.find(
+            {
+              email: { $in: task.assigned }
+            },
+            { name: 1, email: 1, profile_picture_url: 1 }
+          );
+          res.json(assignedVolunteers);
+        }
+        // Send Requests Sent
+        else if (volunteersListType == "requests_sent") {
+          const requestsSentVolunteers = await User.find(
+            {
+              email: { $in: task.requests.sent }
+            },
+            { name: 1, email: 1, profile_picture_url: 1 }
+          );
+
+          res.json(requestsSentVolunteers);
+        }
+        // Send Requests Received
+        else if (volunteersListType == "requests_received") {
+          const requestsReceivedVolunteers = await User.find(
+            {
+              email: { $in: task.requests.received }
+            },
+            { name: 1, email: 1, profile_picture_url: 1 }
+          );
+
+          res.json(requestsReceivedVolunteers);
+        }
+      } else {
+        res.status(httpStatus.NOT_FOUND);
+        res.json({
+          message: "Requested task was not found in any Relief Center!"
+        });
+      }
+    }
+  );
 };

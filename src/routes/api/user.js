@@ -9,8 +9,17 @@ const validator = require("express-validation");
 const userController = require("../../controllers/user.controller");
 // const { createUser } = require("../../validators/user");
 
-// Suggest Random Volunteer(s)
-router.get("/suggest/:number", userController.suggestRandomNumberOfVolunteers);
+// Suggest all volunteers
+router.get("/suggest/", userController.suggestVolunteers);
+
+// Suggest Volunteers for a Task
+router.get("/suggest/task/:taskID", userController.suggestVolunteersForTask);
+
+// Suggest Volunteers for a Task
+router.get(
+  "/suggest/relief-center/:reliefCenterID",
+  userController.suggestVolunteersForReliefCenter
+);
 
 // Get All Opportunities
 router.get("/opportunities", userController.getAllOpportunities);
@@ -18,7 +27,7 @@ router.get("/opportunities", userController.getAllOpportunities);
 // Routes for Users
 
 /* ========== ADMIN ROUTES ========== */
-router.get(
+router.post(
   "/admin/request/:email/:taskID",
   userController.requestUserToVolunteerForTask
 );

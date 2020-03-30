@@ -32,15 +32,34 @@ router.post(
   reliefCenterController.approveVolunteerRequest
 );
 
+// Decline Volunteer Request!
+router.post(
+  "/id/:taskID/:emailID/decline",
+  reliefCenterController.declineVolunteerRequest
+);
+
 // Get Task Categorized and Total Count!
 router.get(
   "/all/requirement",
   reliefCenterController.getReliefCenterRequirements
 );
 
-// Get Task Categorized and Total Count!
+// Get Task Categorized and Total Count! (Relief Center Cards)
 router.get(
   "/id/:reliefCenterID/requirement",
   reliefCenterController.getReliefCenterRequirementsByID
 );
+
+// Get Tasks for Assigning Volunteers! (Relief Center Assign Page)
+router.get(
+  "/id/:reliefCenterID/requirement/assign",
+  reliefCenterController.getReliefCenterTasksByID
+);
+
+// Get Assigned Volunteers for a Task
+router.get(
+  "/task/:taskID/:volunteersListType",
+  reliefCenterController.getAssignedVolunteersByTaskID
+);
+
 module.exports = router;
