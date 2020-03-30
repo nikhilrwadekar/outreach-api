@@ -468,3 +468,20 @@ exports.getAssignedVolunteersByTaskID = async (req, res, next) => {
     }
   );
 };
+
+// Add Tasks to Relief Center!
+exports.addTasksToReliefCenter = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    console.log(req.body);
+    await ReliefCenter.update(
+      { _id: id },
+      { $push: { "volunteers.opportunities": { $each: req.body } } }
+    );
+
+    res.sendStatus(httpStatus.OK);
+  } catch (error) {
+    res.status(httpStatus.BAD_REQUEST).send("Error:" + error);
+  }
+};
