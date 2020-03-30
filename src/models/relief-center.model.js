@@ -4,6 +4,7 @@ const mongoose = require("mongoose"); // Erase if already required
 const opportunitySchema = new mongoose.Schema({
   type: String,
   date: Date,
+  description: String,
   time: {
     start: String,
     end: String
@@ -28,8 +29,8 @@ const reliefCenterSchema = new mongoose.Schema(
       required: true
     },
     picture_url: {
-      type: "String",
-      required: true
+      type: "String"
+      // required: true
     },
     location: {
       type: "String",
