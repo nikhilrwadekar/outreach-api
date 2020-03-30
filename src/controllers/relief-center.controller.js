@@ -433,7 +433,7 @@ exports.getAssignedVolunteersByTaskID = async (req, res, next) => {
             {
               email: { $in: task.assigned }
             },
-            { name: 1, email: 1 }
+            { name: 1, email: 1, profile_picture_url: 1 }
           );
           res.json(assignedVolunteers);
         }
@@ -443,7 +443,7 @@ exports.getAssignedVolunteersByTaskID = async (req, res, next) => {
             {
               email: { $in: task.requests.sent }
             },
-            { name: 1, email: 1 }
+            { name: 1, email: 1, profile_picture_url: 1 }
           );
 
           res.json(requestsSentVolunteers);
@@ -454,7 +454,7 @@ exports.getAssignedVolunteersByTaskID = async (req, res, next) => {
             {
               email: { $in: task.requests.received }
             },
-            { name: 1, email: 1 }
+            { name: 1, email: 1, profile_picture_url: 1 }
           );
 
           res.json(requestsReceivedVolunteers);
