@@ -26,6 +26,9 @@ router.get("/:name", reliefCenterController.getReliefCenterByName);
 // UPDATE Relief Center
 router.put("/id/:id", reliefCenterController.updateReliefCenterByID);
 
+// UPDATE Relief Center
+router.put("/:id/tasks/add", reliefCenterController.addTasksToReliefCenter);
+
 // Approve Volunteer Request!
 router.post(
   "/id/:taskID/:emailID",
