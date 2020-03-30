@@ -197,7 +197,7 @@ exports.declineVolunteerRequest = async (req, res, next) => {
   );
 };
 
-// Get Requirements
+// Get Requirements for Relief Center (Summed Up Count)
 exports.getReliefCenterRequirements = async (req, res, next) => {
   try {
     let reliefCenterRequirements = await ReliefCenter.aggregate([
@@ -269,6 +269,49 @@ exports.getReliefCenterRequirements = async (req, res, next) => {
           }
         }
       },
+      { $sort: { _id: -1 } }
+    ]);
+
+    res.json(reliefCenterRequirements);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get Tasks for a Relief Center
+exports.getReliefCenterTasksByID = async (req, res, next) => {
+  try {
+    let reliefCenterRequirements = await ReliefCenter.aggregate([
+      // Unwind all opportunities
+      { $unwind: "$volunteers.opportunities" },
+
+      // Project each as: Relief Center ID, Name, Type (Job), Number Required, Updated At
+      {
+        $project: {
+          task_id: "$volunteers.opportunities._id",
+          relief_center_id: "$_id",
+          name: 1,
+          type: "$volunteers.opportunities.type",
+          assigned_total: { $size: "$volunteers.opportunities.assigned" },
+          volunteer_requests_total: {
+            $size: "$volunteers.opportunities.requests.received"
+          },
+          requests_sent_by_admin_total: {
+            $size: "$volunteers.opportunities.requests.sent"
+          },
+          total_capacity: "$volunteers.opportunities.required",
+
+          assigned: "$volunteers.opportunities.assigned",
+          volunteer_requests: "$volunteers.opportunities.requests.received",
+          requests_sent_by_admin: "$volunteers.opportunities.requests.sent",
+          date: "$volunteers.opportunities.date",
+          start_time: "$volunteers.opportunities.time.start",
+          end_time: "$volunteers.opportunities.time.end",
+          updatedAt: "$updatedAt",
+          createdAt: "$createdAt"
+        }
+      },
+
       { $sort: { _id: -1 } }
     ]);
 

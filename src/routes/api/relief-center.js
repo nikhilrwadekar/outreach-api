@@ -44,9 +44,15 @@ router.get(
   reliefCenterController.getReliefCenterRequirements
 );
 
-// Get Task Categorized and Total Count!
+// Get Task Categorized and Total Count! (Relief Center Cards)
 router.get(
   "/id/:reliefCenterID/requirement",
   reliefCenterController.getReliefCenterRequirementsByID
+);
+
+// Get Tasks for Assigning Volunteers! (Relief Center Assign Page)
+router.get(
+  "/id/:reliefCenterID/requirement/assign",
+  reliefCenterController.getReliefCenterTasksByID
 );
 module.exports = router;

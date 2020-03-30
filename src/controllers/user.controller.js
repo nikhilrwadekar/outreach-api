@@ -564,11 +564,14 @@ exports.optInToTask = async (req, res, next) => {
           let task = await reliefCenter.volunteers.opportunities.id(taskID);
 
           // Add User's has been requests.sent
-          if (task.requests.sent.includes(email)) {
+          if (
+            task.requests.sent.includes(email) &&
+            !task.assigned.includes(email)
+          ) {
             // Pop User's ID from requests.sent
             task.requests.sent.pop(email);
 
-            // Add it to assigned!
+            // Add it to assigned! if not included already
             task.assigned.push(email);
 
             // Save Relief Center!

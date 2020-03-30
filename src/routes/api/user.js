@@ -18,7 +18,7 @@ router.get("/opportunities", userController.getAllOpportunities);
 // Routes for Users
 
 /* ========== ADMIN ROUTES ========== */
-router.get(
+router.post(
   "/admin/request/:email/:taskID",
   userController.requestUserToVolunteerForTask
 );
