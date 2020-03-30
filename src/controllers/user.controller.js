@@ -177,12 +177,12 @@ exports.getOpportunitiesGroupedByReliefCenter = async (req, res, next) => {
 
     res.json(getUserAssignedTasks);
 
-    console.log("Calleed");
-    let opportunities = await ReliefCenter.find({
-      "volunteers.opportunities.assigned": "nikhilrwadekar@gmail.com"
-    });
+    // console.log("Calleed");
+    // let opportunities = await ReliefCenter.find({
+    //   "volunteers.opportunities.assigned": "nikhilrwadekar@gmail.com"
+    // });
 
-    res.json(opportunities);
+    // res.json(opportunities);
   } catch (error) {
     next(error);
   }
@@ -485,26 +485,96 @@ exports.getReceivedOpportunitiesByUserEmail = async (req, res, next) => {
   }
 };
 
+// Suggest All Volunteers
+exports.suggestVolunteers = async (req, res, next) => {
+  try {
+    const users = await User.aggregate([
+      { $match: { role: "volunteer" } },
+      { $project: { email: 1, name: 1 } }
+    ]);
+
+    res.send(users);
+  } catch (error) {}
+};
+
 // Suggest a random number of users
-exports.suggestRandomNumberOfVolunteers = async (req, res, next) => {
-  const { number } = req.params;
+exports.suggestVolunteersForTask = async (req, res, next) => {
+  const { taskID } = req.params;
+  let volunteersFoundInTask = [];
+  try {
+    // Find Relief Center that has the task with taskID
+    await ReliefCenter.findOne(
+      { "volunteers.opportunities._id": taskID },
+      async function(err, reliefCenter) {
+        if (err) next(err);
 
-  const users = await User.aggregate(
-    [
-      // { $project: { name: 1, password: 0 } },
+        // If Relief Center is found..
+        if (reliefCenter) {
+          // Get the concerned Task from the Relief Center
+          let task = await reliefCenter.volunteers.opportunities.id(taskID);
 
-      { $match: { role: "volunteer" } }, // Get Volunteers Only
-      { $sample: { size: parseInt(number ? number : "1") } },
-      {
-        $project: {
-          name: 1,
-          email: 1
+          // Combine all the arrays..
+          volunteersFoundInTask = [
+            ...task.requests.sent,
+            ...task.requests.received,
+            ...task.assigned
+          ];
+        } else {
+          res.status(httpStatus.NOT_FOUND).json({
+            message: "Requested task was not found in any Relief Center!"
+          });
         }
       }
-    ],
-    (err, users) => {
-      if (err) next(err);
-    }
+    );
+  } catch (error) {}
+
+  const users = await User.find(
+    // Not in Assigned, Requests Sent, Requests Received
+    { email: { $nin: volunteersFoundInTask } },
+
+    // Find Projection
+    { name: 1, email: 1 }
+  );
+
+  res.send(users);
+};
+
+exports.suggestVolunteersForReliefCenter = async (req, res, next) => {
+  const { reliefCenterID } = req.params;
+  let volunteersFoundInTask = [];
+  try {
+    // Find Relief Center that has the task with taskID
+    await ReliefCenter.findOne(
+      { "volunteers.opportunities._id": taskID },
+      async function(err, reliefCenter) {
+        if (err) next(err);
+
+        // If Relief Center is found..
+        if (reliefCenter) {
+          // Get the concerned Task from the Relief Center
+          let task = await reliefCenter.volunteers.opportunities.id(taskID);
+
+          // Combine all the arrays..
+          volunteersFoundInTask = [
+            ...task.requests.sent,
+            ...task.requests.received,
+            ...task.assigned
+          ];
+        } else {
+          res.status(httpStatus.NOT_FOUND).json({
+            message: "Requested task was not found in any Relief Center!"
+          });
+        }
+      }
+    );
+  } catch (error) {}
+
+  const users = await User.find(
+    // Not in Assigned, Requests Sent, Requests Received
+    { email: { $nin: volunteersFoundInTask } },
+
+    // Find Projection
+    { name: 1, email: 1 }
   );
 
   res.send(users);

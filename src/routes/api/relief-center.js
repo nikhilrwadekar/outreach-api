@@ -55,4 +55,11 @@ router.get(
   "/id/:reliefCenterID/requirement/assign",
   reliefCenterController.getReliefCenterTasksByID
 );
+
+// Get Assigned Volunteers for a Task
+router.get(
+  "/task/:taskID/:volunteersListType",
+  reliefCenterController.getAssignedVolunteersByTaskID
+);
+
 module.exports = router;

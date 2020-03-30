@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 
 // Get The Model
 const ReliefCenter = require("../models/relief-center.model");
-
+const User = require("../models/user.model");
 // Get Config
 const config = require("../config");
 
@@ -281,7 +281,10 @@ exports.getReliefCenterRequirements = async (req, res, next) => {
 // Get Tasks for a Relief Center
 exports.getReliefCenterTasksByID = async (req, res, next) => {
   try {
+    const { reliefCenterID } = req.params;
     let reliefCenterRequirements = await ReliefCenter.aggregate([
+      { $match: { _id: mongoose.Types.ObjectId(reliefCenterID) } },
+
       // Unwind all opportunities
       { $unwind: "$volunteers.opportunities" },
 
@@ -307,6 +310,13 @@ exports.getReliefCenterTasksByID = async (req, res, next) => {
           date: "$volunteers.opportunities.date",
           start_time: "$volunteers.opportunities.time.start",
           end_time: "$volunteers.opportunities.time.end",
+          volunteers_linked: {
+            $concatArrays: [
+              "$volunteers.opportunities.requests.received",
+              "$volunteers.opportunities.requests.sent",
+              "$volunteers.opportunities.assigned"
+            ]
+          },
           updatedAt: "$updatedAt",
           createdAt: "$createdAt"
         }
@@ -395,4 +405,66 @@ exports.getReliefCenterRequirementsByID = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+// Get Assigned Volunteers for a Task
+
+exports.getAssignedVolunteersByTaskID = async (req, res, next) => {
+  // Get Task ID and Email ID from the request!
+  const { taskID, volunteersListType } = req.params;
+
+  // Find Relief Center that has the task with taskID
+  await ReliefCenter.findOne(
+    { "volunteers.opportunities._id": taskID },
+    async function(err, reliefCenter) {
+      if (err) next(err);
+
+      // If Relief Center is found..
+      if (reliefCenter) {
+        // Get the concerned Task from the Relief Center
+        let task = await reliefCenter.volunteers.opportunities.id(taskID);
+
+        // Send Back Assigned List
+        res.status(httpStatus.OK);
+
+        // Send Assigned
+        if (volunteersListType == "assigned") {
+          const assignedVolunteers = await User.find(
+            {
+              email: { $in: task.assigned }
+            },
+            { name: 1, email: 1 }
+          );
+          res.json(assignedVolunteers);
+        }
+        // Send Requests Sent
+        else if (volunteersListType == "requests_sent") {
+          const requestsSentVolunteers = await User.find(
+            {
+              email: { $in: task.requests.sent }
+            },
+            { name: 1, email: 1 }
+          );
+
+          res.json(requestsSentVolunteers);
+        }
+        // Send Requests Received
+        else if (volunteersListType == "requests_received") {
+          const requestsReceivedVolunteers = await User.find(
+            {
+              email: { $in: task.requests.received }
+            },
+            { name: 1, email: 1 }
+          );
+
+          res.json(requestsReceivedVolunteers);
+        }
+      } else {
+        res.status(httpStatus.NOT_FOUND);
+        res.json({
+          message: "Requested task was not found in any Relief Center!"
+        });
+      }
+    }
+  );
 };
