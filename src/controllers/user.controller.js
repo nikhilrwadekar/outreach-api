@@ -614,11 +614,9 @@ exports.optOutFromTask = async (req, res, next) => {
             // Pop User's ID from assigned
             task.assigned.pop(email);
 
-            console.log("Trying to save Volunteer Opt Out!");
             // Save Relief Center!
             reliefCenter.save();
 
-            console.log("Trying to save notification");
             // Create a new Notification for Opting Out
             const notification = new Notification({
               email: email,
