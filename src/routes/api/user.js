@@ -76,7 +76,7 @@ router.post("/:email/optout/:taskID", userController.optOutFromTask);
 // Opt in to a task - Accept Admin's Request
 router.post("/:email/optin/:taskID", userController.optInToTask);
 
-// Opt in to a task - Accept Admin's Request
+// Opt in to a task - Decline Admin's Request
 router.post("/:email/decline/:taskID", userController.declineTask);
 
 module.exports = router;

@@ -22,10 +22,17 @@ app.start(); // Start the Express App
 mongoose.connect(); // Connect to MongoDB with Mongoose
 
 const reliefCenterChangeStream = ReliefCenter.watch();
+const userChangeStream = User.watch([], { fullDocument: "updateLookup" });
+const disasterChangeStream = Disaster.watch();
 
 reliefCenterChangeStream.on("change", change => {
-  console.log("Relief Center Data was changed..");
+  console.log("Relief Center Data was changed..", change);
   io.emit("reliefCenterDataChange", change);
+});
+
+userChangeStream.on("change", change => {
+  console.log("User Data was changed..", change);
+  io.emit("userChangeStream", change);
 });
 
 // Update Broadcast!
