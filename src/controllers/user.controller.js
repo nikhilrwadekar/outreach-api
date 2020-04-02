@@ -320,16 +320,28 @@ exports.getAllOpportunities = async (req, res, next) => {
       // Unwind all opportunities
       { $unwind: "$volunteers.opportunities" },
 
+      {
+        $lookup: {
+          from: "volunteeringtypes",
+          localField: "volunteers.opportunities.type",
+          foreignField: "name",
+          as: "volunteeringtype"
+        }
+      },
       // Only pass on the following fields
       {
         $project: {
           name: 1,
           location: 1,
           description: 1,
+          task_picture_url: {
+            $arrayElemAt: ["$volunteeringtype.image_url", 0]
+          },
           picture_url: 1,
           opportunity_id: "$volunteers.opportunities._id",
           opportunity_date: "$volunteers.opportunities.date",
           opportunity_type: "$volunteers.opportunities.type",
+          opportunity_description: "$volunteers.opportunities.description",
           opportunity_time: "$volunteers.opportunities.time",
           opportunity_required: "$volunteers.opportunities.required",
           opportunity_assigned: "$volunteers.opportunities.assigned",
