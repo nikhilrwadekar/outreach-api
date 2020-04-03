@@ -44,6 +44,7 @@ var notificationSchema = new mongoose.Schema(
     role: String,
     action: String,
     task_id: String,
+    task_name: String,
     location: String,
     address: String,
     date: Date,

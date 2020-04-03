@@ -7,15 +7,17 @@ const validator = require("express-validation");
 
 // Transaction Controller and Validators
 const notificationController = require("../../controllers/notification.controller");
-// const { createTransaction } = require("../../validators/transaction");
 
-// Routes for Transactions
+// Routes for Notfications
 
-// Get all Transactions
-router.get("/:email", notificationController.getAllNotificationsForUser);
+// Get all Notfications
+router.get(
+  "/volunteer/:email",
+  notificationController.getAllNotificationsForUser
+);
 
-// Get all Transactions - Grouped
-// router.get("/currency", notificationController.getTotalDonated);
+// Get all Notfications - Admin
+router.get("/admin", notificationController.getAllAdminNotifications);
 
 // Get a Transaction based on it's ID
 // router.get("/id/:id", notificationController.getTransactionByID);

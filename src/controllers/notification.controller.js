@@ -20,3 +20,16 @@ exports.getAllNotificationsForUser = async (req, res, next) => {
     return next(error);
   }
 };
+
+// Admin Notifications
+exports.getAllAdminNotifications = async (req, res, next) => {
+  try {
+    const allAdminNotifications = await Notification.find().sort({
+      createdAt: -1
+    });
+
+    res.send(allAdminNotifications);
+  } catch (error) {
+    return next(error);
+  }
+};

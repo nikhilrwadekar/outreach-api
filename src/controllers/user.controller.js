@@ -623,6 +623,7 @@ exports.optOutFromTask = async (req, res, next) => {
               role: "volunteer",
               action: "opt_out",
               task_id: taskID,
+              task_name: task.type,
               location: reliefCenter.name,
               address: reliefCenter.location,
               date: task.date,
@@ -680,6 +681,26 @@ exports.optInToTask = async (req, res, next) => {
 
             // Save Relief Center!
             reliefCenter.save();
+
+            // Create a new Notification for Opting In
+            const notification = new Notification({
+              email: email,
+              role: "volunteer",
+              action: "opt_in",
+              task_id: taskID,
+              task_name: task.type,
+              location: reliefCenter.name,
+              address: reliefCenter.location,
+              date: task.date,
+              start_time: task.time.start,
+              end_time: task.time.end,
+              status: "Opted In",
+              relief_center_id: reliefCenter._id
+            });
+
+            // Save the entry into MongoDB
+            const savedNotification = await notification.save();
+
             res
               .status(httpStatus.OK)
               .json({ message: "User successfully opted in!" });
@@ -721,6 +742,26 @@ exports.declineTask = async (req, res, next) => {
 
             // Save Relief Center!
             reliefCenter.save();
+
+            // Create a new Notification for declining request
+            const notification = new Notification({
+              email: email,
+              role: "volunteer",
+              action: "decline",
+              task_id: taskID,
+              task_name: task.type,
+              location: reliefCenter.name,
+              address: reliefCenter.location,
+              date: task.date,
+              start_time: task.time.start,
+              end_time: task.time.end,
+              status: "Volunteer Declined",
+              relief_center_id: reliefCenter._id
+            });
+
+            // Save the entry into MongoDB
+            const savedNotification = await notification.save();
+
             res
               .status(httpStatus.OK)
               .json({ message: "User successfully declined task!" });
