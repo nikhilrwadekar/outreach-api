@@ -353,9 +353,10 @@ exports.getAllOpportunities = async (req, res, next) => {
       // Only return those which have True Dates
       {
         $match: {
-          opportunity_date: {
-            $gte: new Date()
-          }
+          $or: [
+            { opportunity_date: { $gte: new Date().setHours(0, 0, 0, 0) } },
+            { opportunity_date: null }
+          ]
         }
       }
     ]);
