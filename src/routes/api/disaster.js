@@ -17,7 +17,7 @@ const authController = require("../../controllers/auth.controller");
 // Get all Disasters
 router.get(
   "/",
-  authController.authenticateToken,
+  // authController.authenticateToken,
   disasterController.getAllDisasters
 );
 

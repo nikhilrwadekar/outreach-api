@@ -1,6 +1,8 @@
-// Get The Model
+// Get The Models
 const User = require("../models/user.model");
 const ReliefCenter = require("../models/relief-center.model");
+const Notification = require("../models/notification.model");
+
 const mongoose = require("mongoose");
 // Get Config
 const config = require("../config");
@@ -351,9 +353,14 @@ exports.getAllOpportunities = async (req, res, next) => {
       // Only return those which have True Dates
       {
         $match: {
-          opportunity_date: {
-            $gte: new Date()
-          }
+          $or: [
+            {
+              opportunity_date: {
+                $gte: new Date(new Date().setHours(0, 0, 0, 0))
+              }
+            },
+            { opportunity_date: null }
+          ]
         }
       }
     ]);
@@ -611,8 +618,29 @@ exports.optOutFromTask = async (req, res, next) => {
           if (task.assigned.includes(email)) {
             // Pop User's ID from assigned
             task.assigned.pop(email);
+
             // Save Relief Center!
             reliefCenter.save();
+
+            // Create a new Notification for Opting Out
+            const notification = new Notification({
+              email: email,
+              role: "volunteer",
+              action: "opt_out",
+              task_id: taskID,
+              task_name: task.type,
+              location: reliefCenter.name,
+              address: reliefCenter.location,
+              date: task.date,
+              start_time: task.time.start,
+              end_time: task.time.end,
+              status: "Opted Out",
+              relief_center_id: reliefCenter._id
+            });
+
+            // Save the entry into MongoDB
+            const savedNotification = await notification.save();
+
             res
               .status(httpStatus.OK)
               .json({ message: "User successfully opted out!" });
@@ -658,6 +686,26 @@ exports.optInToTask = async (req, res, next) => {
 
             // Save Relief Center!
             reliefCenter.save();
+
+            // Create a new Notification for Opting In
+            const notification = new Notification({
+              email: email,
+              role: "volunteer",
+              action: "opt_in",
+              task_id: taskID,
+              task_name: task.type,
+              location: reliefCenter.name,
+              address: reliefCenter.location,
+              date: task.date,
+              start_time: task.time.start,
+              end_time: task.time.end,
+              status: "Opted In",
+              relief_center_id: reliefCenter._id
+            });
+
+            // Save the entry into MongoDB
+            const savedNotification = await notification.save();
+
             res
               .status(httpStatus.OK)
               .json({ message: "User successfully opted in!" });
@@ -699,6 +747,26 @@ exports.declineTask = async (req, res, next) => {
 
             // Save Relief Center!
             reliefCenter.save();
+
+            // Create a new Notification for declining request
+            const notification = new Notification({
+              email: email,
+              role: "volunteer",
+              action: "decline",
+              task_id: taskID,
+              task_name: task.type,
+              location: reliefCenter.name,
+              address: reliefCenter.location,
+              date: task.date,
+              start_time: task.time.start,
+              end_time: task.time.end,
+              status: "Volunteer Declined",
+              relief_center_id: reliefCenter._id
+            });
+
+            // Save the entry into MongoDB
+            const savedNotification = await notification.save();
+
             res
               .status(httpStatus.OK)
               .json({ message: "User successfully declined task!" });

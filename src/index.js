@@ -16,16 +16,28 @@ io.set("origins", "*:*");
 // All Data Models
 const ReliefCenter = require("./models/relief-center.model");
 const User = require("./models/user.model");
-const Disaster = require("./models/disaster.model");
+const Notification = require("./models/notification.model");
 
 app.start(); // Start the Express App
 mongoose.connect(); // Connect to MongoDB with Mongoose
 
 const reliefCenterChangeStream = ReliefCenter.watch();
+const userChangeStream = User.watch([], { fullDocument: "updateLookup" });
+const notificationChangeStream = Notification.watch();
 
 reliefCenterChangeStream.on("change", change => {
-  console.log("Relief Center Data was changed..");
+  console.log("Relief Center Data was changed..", change);
   io.emit("reliefCenterDataChange", change);
+});
+
+userChangeStream.on("change", change => {
+  console.log("User Data was changed..", change);
+  io.emit("userDataChange", change);
+});
+
+notificationChangeStream.on("change", change => {
+  console.log("New Notifications.. !", change);
+  io.emit("notificationDataChange", change);
 });
 
 // Update Broadcast!
