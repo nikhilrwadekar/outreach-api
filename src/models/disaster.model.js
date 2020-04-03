@@ -16,7 +16,7 @@ const disasterSchema = new mongoose.Schema(
       type: "String"
     },
     image_url: {
-      type: "String"
+      type: Array
     },
     donation: {
       goal: {

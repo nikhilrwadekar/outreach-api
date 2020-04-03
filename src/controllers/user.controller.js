@@ -354,7 +354,11 @@ exports.getAllOpportunities = async (req, res, next) => {
       {
         $match: {
           $or: [
-            { opportunity_date: { $gte: new Date().setHours(0, 0, 0, 0) } },
+            {
+              opportunity_date: {
+                $gte: new Date(new Date().setHours(0, 0, 0, 0))
+              }
+            },
             { opportunity_date: null }
           ]
         }

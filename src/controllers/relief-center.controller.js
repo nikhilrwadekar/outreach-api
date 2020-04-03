@@ -4,6 +4,8 @@ const mongoose = require("mongoose");
 // Get The Model
 const ReliefCenter = require("../models/relief-center.model");
 const User = require("../models/user.model");
+const Notification = require("../models/notification.model");
+
 // Get Config
 const config = require("../config");
 
@@ -137,6 +139,25 @@ exports.approveVolunteerRequest = async (req, res, next) => {
           // Remove User's Email from requests.
           task.requests.received.pull(emailID);
 
+          // Create a new Notification for declining request
+          const notification = new Notification({
+            email: emailID,
+            role: "admin",
+            action: "approve",
+            task_id: taskID,
+            task_name: task.type,
+            location: reliefCenter.name,
+            address: reliefCenter.location,
+            date: task.date,
+            start_time: task.time.start,
+            end_time: task.time.end,
+            status: "Admin Approved",
+            relief_center_id: reliefCenter._id
+          });
+
+          // Save the entry into MongoDB
+          const savedNotification = await notification.save();
+
           // Save Relief Center!
           reliefCenter.save();
 
@@ -175,6 +196,25 @@ exports.declineVolunteerRequest = async (req, res, next) => {
         if (task.requests.received.includes(emailID)) {
           // Remove User's Email from requests. (Decline Request)
           task.requests.received.pull(emailID);
+
+          // Create a new Notification for declining request
+          const notification = new Notification({
+            email: emailID,
+            role: "admin",
+            action: "decline",
+            task_id: taskID,
+            task_name: task.type,
+            location: reliefCenter.name,
+            address: reliefCenter.location,
+            date: task.date,
+            start_time: task.time.start,
+            end_time: task.time.end,
+            status: "Admin Declined",
+            relief_center_id: reliefCenter._id
+          });
+
+          // Save the entry into MongoDB
+          const savedNotification = await notification.save();
 
           // Save Relief Center!
           reliefCenter.save();
