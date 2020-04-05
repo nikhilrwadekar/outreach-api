@@ -14,6 +14,9 @@ const passport = require("passport");
 const helmet = require("helmet");
 const app = express();
 
+// Token Authenticator
+const authController = require("../controllers/auth.controller");
+
 // Passport Config
 require("../services/passport")(passport);
 
@@ -29,7 +32,7 @@ app.use(
   session({
     secret: "secret",
     resave: true,
-    saveUninitialized: true
+    saveUninitialized: true,
   })
 );
 
@@ -49,13 +52,13 @@ app.use((req, res, next) => {
 });
 
 // API Routes
-app.use("/api", apiRouter);
+app.use("/api", authController.authenticateToken, apiRouter);
 // app.use(errorHandler.handleNotFound);
 // app.use(errorHandler.handleError);
 
 // Start Server
 exports.start = () => {
-  app.listen(config.port, err => {
+  app.listen(config.port, (err) => {
     if (err) {
       console.log(`Error: ${err}`);
       // -1 for

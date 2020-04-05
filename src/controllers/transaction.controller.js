@@ -33,13 +33,11 @@ exports.getTransactionByID = async (req, res, next) => {
 exports.deleteTransactionByID = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const deletedTransaction = await Transaction.findOneAndDelete({
-      id: parseInt(id)
-    });
+    const deletedTransaction = await Transaction.findByIdAndDelete(id);
     res.status(httpStatus.OK);
     return res.json({
       message: "Transaction was deleted!",
-      data: deletedTransaction
+      data: deletedTransaction,
     });
   } catch (error) {
     next(error);
@@ -51,15 +49,15 @@ exports.getTotalDonated = async (req, res, next) => {
   var pipeline = [
     {
       $group: {
-        _id: "$name",
+        _id: "$_id",
         // Get the first currency ('CAD', 'EUR', etc. of the group - makes sense as it is common for them all - or in other words Group By this)
         currency: { $first: "$currency" },
         // The Field to Sum, Before summing convert to Int
-        amount: { $sum: { $toInt: "$amount" } }
-      }
-    }
+        amount: { $sum: { $toInt: "$amount" } },
+      },
+    },
   ];
-  Transaction.aggregate(pipeline, function(err, results) {
+  Transaction.aggregate(pipeline, function (err, results) {
     if (err) throw err;
     res.send(results);
   });

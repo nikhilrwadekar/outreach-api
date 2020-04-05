@@ -44,6 +44,7 @@ router.post(
 // Get Task Categorized and Total Count!
 router.get(
   "/all/requirement",
+
   reliefCenterController.getReliefCenterRequirements
 );
 
@@ -59,7 +60,7 @@ router.get(
   reliefCenterController.getReliefCenterTasksByID
 );
 
-// Get Assigned Volunteers for a Task
+// Get Assigned or Request Sent or Request Received by Volunteers for a Task
 router.get(
   "/task/:taskID/:volunteersListType",
   reliefCenterController.getAssignedVolunteersByTaskID

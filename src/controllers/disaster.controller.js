@@ -25,15 +25,8 @@ exports.getAllDisasters = async (req, res, next) => {
 // Create Disaster
 exports.createDisaster = async (req, res, next) => {
   try {
-    // New ID for the Disaster
-    const disasterID = uuidv1();
-
     // Details for the Disaster from the Request (body)
     const body = req.body;
-
-    // Attach UUID to the information before we create the entry in MongoDB
-    // body.activationKey = activationKey;
-    // Let MongoDB handle it
 
     // Take the data from Request, Use the Model to create the entry
     const disaster = new Disaster(body);
@@ -83,12 +76,12 @@ exports.deleteDisaster = async (req, res, next) => {
   try {
     const { id } = req.params;
     const deletedDisaster = await Disaster.findOneAndDelete({
-      id: parseInt(id)
+      id: parseInt(id),
     });
     res.status(httpStatus.OK);
     return res.json({
       message: "Disaster was deleted!",
-      data: deletedDisaster
+      data: deletedDisaster,
     });
   } catch (error) {
     next(error);
@@ -114,7 +107,7 @@ exports.donateToDisasterByID = async (req, res, next) => {
     res.status(httpStatus.OK);
     return res.json({
       message: `Donation was successful to ${disasterDonation.name}!`,
-      data: savedTransaction
+      data: savedTransaction,
     });
   } catch (error) {
     next(error);
@@ -127,11 +120,11 @@ exports.getTotalDonatedByID = async (req, res, next) => {
     {
       $group: {
         currency: "$currency",
-        total: { $sum: "$amount" }
-      }
-    }
+        total: { $sum: "$amount" },
+      },
+    },
   ];
-  Disaster.aggregate(pipeline, function(err, results) {
+  Disaster.aggregate(pipeline, function (err, results) {
     if (err) throw err;
     console.log(results);
   });
