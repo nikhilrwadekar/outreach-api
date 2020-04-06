@@ -19,41 +19,11 @@ const passport = require("passport");
 const generateAccessToken = (issuerInformation) =>
   jwt.sign(issuerInformation, process.env.ACCESS_TOKEN_SECRET);
 
-router.get("/logout", function (req, res) {
-  req.logOut();
-  req.session.destroy(function (err) {
-    if (!err) {
-      res
-        .status(200)
-        .clearCookie("connect.sid", { path: "/" })
-        .json({ status: "Success" });
-    } else {
-      // handle error case...
-    }
-  });
-});
-
 // Google Auth
 router.post("/login/google", authController.verifyGoogleAccessToken);
 
-// Google Callback
-router.get(
-  "/login/google/callback",
-  passport.authenticate("google", {
-    successRedirect: "/api/disaster/",
-    failureRedirect: "/api/auth/login/google",
-  }),
-  async (req, res, next) => {
-    res.send(req.user);
-  }
-);
-
-// Redirect the user back to the app
-router.get("/login/google/redirect", async (req, res, next) => {
-  // you can see what you get back from LinkedIn here:
-  console.log(req.user);
-  res.redirect("exp://10.0.0.11:19000/?" + JSON.stringify(req.user));
-});
+// Facebook Auth
+router.post("/login/facebook", authController.verifyFacebookAccessToken);
 
 // Login Route
 router.post("/login", passport.authenticate("local"), async function (
@@ -69,7 +39,7 @@ router.post("/login", passport.authenticate("local"), async function (
 
   let accessToken = null;
 
-  // Find a Refresh Token for the user
+  // Find a Refresh Token for the user, Create a new Access Token with it, send it all back!
   await Token.findOne({ email: email }, (tokenNotFound, tokenFoundInDB) => {
     if (tokenNotFound) {
       res.sendStatus(httpStatus.UNAUTHORIZED);
@@ -92,34 +62,26 @@ router.post("/login", passport.authenticate("local"), async function (
         }
       );
     }
+
+    // Send back the info
+    if (!!accessToken && !!tokenFoundInDB.token)
+      res.status(200).json({
+        address: user.address,
+        availability: user.availability,
+        type: user.type,
+        profile_picture_url: user.profile_picture_url,
+        role: user.role,
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        contact_number: user.contact_number,
+        accessToken: accessToken,
+        refreshToken: tokenFoundInDB.token,
+      });
   });
-
-  res.sendStatus(403);
-
-  // Send back the info
-  if (!!accessToken && !!refreshToken)
-    res.status(200).json({
-      address: user.address,
-      availability: user.availability,
-      type: user.type,
-      profile_picture_url: user.profile_picture_url,
-      role: user.role,
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      contact_number: user.contact_number,
-      accessToken: accessToken,
-      refreshToken: refreshToken,
-    });
 });
-
-// Facebook Callback
-router.post("/login/facebook", passport.authenticate("facebook"));
 
 // Token Refresh/Generator
 router.post("/token", authController.generateAccessTokenWithRefreshToken);
-
-//Logout User - Remove the refresh token from the DB
-// router.delete("/logout");
 
 module.exports = router;

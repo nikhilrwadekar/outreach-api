@@ -177,3 +177,49 @@ exports.verifyGoogleAccessToken = async (req, res) => {
     // res.send(error);
   }
 };
+
+exports.verifyFacebookAccessToken = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    // Get ID, Name, and Email!
+    const meResponse = await axios.get(
+      `https://graph.facebook.com/me?fields=id,name,email&access_token=${token}`
+    );
+
+    // Find the user email in DB
+    const user = await User.findOne({ email: meResponse.data.email }).select(
+      "-password"
+    );
+
+    // If found, send the data (+ Access Token + Refresh Token)
+    if (user) {
+      const { name, role } = user;
+
+      // Generate Access token
+      const newAccessToken = generateAccessToken({
+        iss: "outreach",
+        name: name,
+        admin: role == "admin",
+      });
+
+      res.send({
+        address: user.address,
+        availability: user.availability,
+        type: user.type,
+        profile_picture_url: user.profile_picture_url,
+        role: user.role,
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        contact_number: user.contact_number,
+        accessToken: newAccessToken,
+      });
+    } else {
+      // If not found..
+      res.send({ userExists: false, message: "User Not Found" });
+    }
+  } catch (error) {
+    res.status(403).send({ message: "Invalid Facebook Access Token" });
+  }
+};
