@@ -3,6 +3,9 @@ const express = require("express");
 // Express Router
 const router = express.Router();
 
+// Auth Controller - for token Validation
+const authController = require("../../controllers/auth.controller");
+
 // Get Routers
 const reliefCenterRouter = require("./relief-center");
 const userRouter = require("./user");
@@ -12,12 +15,24 @@ const authRouter = require("./auth");
 const volunteeringTypeRouter = require("./volunteering-type");
 const notificationRouter = require("./notification");
 
-router.use("/relief-center", reliefCenterRouter);
-router.use("/user", userRouter);
-router.use("/disaster", disasterRouter);
-router.use("/transaction", transactionRouter);
-router.use("/auth", authRouter);
-router.use("/volunteering-type", volunteeringTypeRouter);
-router.use("/notification", notificationRouter);
+// Open for getting a token
+router.use("/auth", authRouter); // Has the Login Route
+router.use("/user", userRouter); // Has the Create Account Route
+router.use("/disaster", disasterRouter); // Open for Anonymous Donations
+router.use("/volunteering-type", volunteeringTypeRouter); // Needed for signing up
+
+// These routes need a token to be accessed
+router.use(
+  "/relief-center",
+  authController.authenticateToken,
+  reliefCenterRouter
+);
+router.use("/transaction", authController.authenticateToken, transactionRouter);
+
+router.use(
+  "/notification",
+  authController.authenticateToken,
+  notificationRouter
+);
 
 module.exports = router;

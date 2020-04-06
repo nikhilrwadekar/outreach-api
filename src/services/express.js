@@ -14,9 +14,6 @@ const passport = require("passport");
 const helmet = require("helmet");
 const app = express();
 
-// Token Authenticator
-const authController = require("../controllers/auth.controller");
-
 // Passport Config
 require("../services/passport")(passport);
 
@@ -52,7 +49,7 @@ app.use((req, res, next) => {
 });
 
 // API Routes
-app.use("/api", authController.authenticateToken, apiRouter);
+app.use("/api", apiRouter);
 // app.use(errorHandler.handleNotFound);
 // app.use(errorHandler.handleError);
 

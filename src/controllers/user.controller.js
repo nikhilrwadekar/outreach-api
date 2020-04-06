@@ -8,6 +8,8 @@ const mongoose = require("mongoose");
 // Get Config
 const config = require("../config");
 
+// JWT
+const jwt = require("jsonwebtoken");
 // HTTP Status - Handling HTTP Status Codes Made Easier
 const httpStatus = require("http-status");
 
@@ -22,9 +24,6 @@ exports.createUser = async (req, res, next) => {
 
     // Save the entry into MongoDB
     const savedUser = await user.save();
-
-    // Return with Status of Created
-    res.status(httpStatus.CREATED);
 
     // Issuer Info
     const issuerInformation = {
@@ -45,16 +44,20 @@ exports.createUser = async (req, res, next) => {
     // Save the refresh token in the Token collection along with the user's Email
     const newToken = new Token({
       token: refreshToken,
-      email: email,
+      email: user.email,
     });
 
     const refreshTokenInDB = await newToken.save();
 
     // Send back the data that was just created + Access Token + Refresh Token
-    res.send({ ...savedUser, accessToken, refreshToken });
+    res
+      .status(httpStatus.CREATED)
+      .send({ ...savedUser._doc, accessToken, refreshToken });
   } catch (error) {
-    // Setup a check for Duplicate Email here
-    return next(error);
+    // res.send(error);
+    if (!!error.keyPattern.email) {
+      res.status(httpStatus.CONFLICT).send({ message: "Email is taken." });
+    } else res.send(error);
   }
 };
 
@@ -76,7 +79,10 @@ exports.getUserByEmail = async (req, res, next) => {
     const { email } = req.params; // Get the Email from Params
 
     const user = await User.findOne({ email: email }).select("-password"); // Find One by Name
-    return res.json(user); // Return the User
+
+    if (user) return res.json({ userExists: true });
+    // Return a Boolean if user exists
+    else return res.json({ userExists: false });
   } catch (error) {
     next(error);
   }

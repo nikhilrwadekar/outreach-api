@@ -19,6 +19,42 @@ const passport = require("passport");
 const generateAccessToken = (issuerInformation) =>
   jwt.sign(issuerInformation, process.env.ACCESS_TOKEN_SECRET);
 
+router.get("/logout", function (req, res) {
+  req.logOut();
+  req.session.destroy(function (err) {
+    if (!err) {
+      res
+        .status(200)
+        .clearCookie("connect.sid", { path: "/" })
+        .json({ status: "Success" });
+    } else {
+      // handle error case...
+    }
+  });
+});
+
+// Google Auth
+router.post("/login/google", authController.verifyGoogleAccessToken);
+
+// Google Callback
+router.get(
+  "/login/google/callback",
+  passport.authenticate("google", {
+    successRedirect: "/api/disaster/",
+    failureRedirect: "/api/auth/login/google",
+  }),
+  async (req, res, next) => {
+    res.send(req.user);
+  }
+);
+
+// Redirect the user back to the app
+router.get("/login/google/redirect", async (req, res, next) => {
+  // you can see what you get back from LinkedIn here:
+  console.log(req.user);
+  res.redirect("exp://10.0.0.11:19000/?" + JSON.stringify(req.user));
+});
+
 // Login Route
 router.post("/login", passport.authenticate("local"), async function (
   req,
@@ -76,6 +112,9 @@ router.post("/login", passport.authenticate("local"), async function (
       refreshToken: refreshToken,
     });
 });
+
+// Facebook Callback
+router.post("/login/facebook", passport.authenticate("facebook"));
 
 // Token Refresh/Generator
 router.post("/token", authController.generateAccessTokenWithRefreshToken);
