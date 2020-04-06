@@ -29,7 +29,7 @@ app.use(
   session({
     secret: "secret",
     resave: true,
-    saveUninitialized: true
+    saveUninitialized: true,
   })
 );
 
@@ -55,7 +55,7 @@ app.use("/api", apiRouter);
 
 // Start Server
 exports.start = () => {
-  app.listen(config.port, err => {
+  app.listen(config.port, (err) => {
     if (err) {
       console.log(`Error: ${err}`);
       // -1 for

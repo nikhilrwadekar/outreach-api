@@ -2,11 +2,14 @@
 const User = require("../models/user.model");
 const ReliefCenter = require("../models/relief-center.model");
 const Notification = require("../models/notification.model");
+const Token = require("../models/refresh-token.model");
 
 const mongoose = require("mongoose");
 // Get Config
 const config = require("../config");
 
+// JWT
+const jwt = require("jsonwebtoken");
 // HTTP Status - Handling HTTP Status Codes Made Easier
 const httpStatus = require("http-status");
 
@@ -22,14 +25,39 @@ exports.createUser = async (req, res, next) => {
     // Save the entry into MongoDB
     const savedUser = await user.save();
 
-    // Return with Status of Created
-    res.status(httpStatus.CREATED);
+    // Issuer Info
+    const issuerInformation = {
+      iss: "outreach",
+      name: user.name,
+      admin: user.role == "admin",
+    };
 
-    // Send back the data that was just created
-    res.send(savedUser);
+    const accessToken = jwt.sign(
+      issuerInformation,
+      process.env.ACCESS_TOKEN_SECRET
+    ); //Generate Access Token
+    const refreshToken = jwt.sign(
+      issuerInformation,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
+    // Save the refresh token in the Token collection along with the user's Email
+    const newToken = new Token({
+      token: refreshToken,
+      email: user.email,
+    });
+
+    const refreshTokenInDB = await newToken.save();
+
+    // Send back the data that was just created + Access Token + Refresh Token
+    res
+      .status(httpStatus.CREATED)
+      .send({ ...savedUser._doc, accessToken, refreshToken });
   } catch (error) {
-    // Setup a check for Duplicate Email here
-    return next(error);
+    // res.send(error);
+    if (!!error.keyPattern.email) {
+      res.status(httpStatus.CONFLICT).send({ message: "Email is taken." });
+    } else res.send(error);
   }
 };
 
@@ -38,7 +66,7 @@ exports.getUserByID = async (req, res, next) => {
   try {
     const { id } = req.params; // Get the ID from Params
 
-    const user = await User.findOne({ id: parseInt(id) }).select("-password"); // Find One by ID
+    const user = await User.findById(id).select("-password"); // Find One by ID
     return res.json(user); // Return the User
   } catch (error) {
     next(error);
@@ -51,7 +79,10 @@ exports.getUserByEmail = async (req, res, next) => {
     const { email } = req.params; // Get the Email from Params
 
     const user = await User.findOne({ email: email }).select("-password"); // Find One by Name
-    return res.json(user); // Return the User
+
+    if (user) return res.json({ userExists: true });
+    // Return a Boolean if user exists
+    else return res.json({ userExists: false });
   } catch (error) {
     next(error);
   }
@@ -62,12 +93,12 @@ exports.deleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
     const deletedUser = await User.findOneAndDelete({
-      id: parseInt(id)
+      id: parseInt(id),
     });
     res.status(httpStatus.OK);
     return res.json({
       message: "User was deleted!",
-      data: deletedUser
+      data: deletedUser,
     });
   } catch (error) {
     next(error);
@@ -81,7 +112,7 @@ exports.updateUserByID = async (req, res, next) => {
     const updatedUser = await User.findOneAndUpdate({ _id: id }, req.body);
     res.status(httpStatus.OK);
     return res.json({
-      message: `User was updated - ${updatedUser._id}`
+      message: `User was updated - ${updatedUser._id}`,
     });
   } catch (error) {
     next(error);
@@ -94,7 +125,7 @@ exports.sendVolunteerRequest = async (req, res, next) => {
     const { userID, taskID, email } = req.params;
 
     // Find User with the UserID
-    await User.findOne({ email: email }, async function(err, user) {
+    await User.findOne({ email: email }, async function (err, user) {
       if (err) {
         console.log("Error:", err);
       }
@@ -104,7 +135,7 @@ exports.sendVolunteerRequest = async (req, res, next) => {
         // Find Relief Center that has the task with taskID
         await ReliefCenter.findOne(
           { "volunteers.opportunities._id": taskID },
-          async function(err, reliefCenter) {
+          async function (err, reliefCenter) {
             if (err) next(err);
 
             // If Relief Center is found..
@@ -127,7 +158,7 @@ exports.sendVolunteerRequest = async (req, res, next) => {
             } else {
               res.status(httpStatus.NOT_FOUND);
               res.json({
-                message: "Requested task was not found in any Relief Center!"
+                message: "Requested task was not found in any Relief Center!",
               });
             }
           }
@@ -162,17 +193,17 @@ exports.getOpportunitiesGroupedByReliefCenter = async (req, res, next) => {
           location: 1,
           "volunteers.opportunities.date": 1,
           "volunteers.opportunities.type": 1,
-          "volunteers.opportunities.time": 1
-        }
+          "volunteers.opportunities.time": 1,
+        },
       },
       // Group them in a particular fashion
       {
         $group: {
           _id: "$name",
           location: { $first: "$location" },
-          tasks: { $push: "$volunteers.opportunities" }
-        }
-      }
+          tasks: { $push: "$volunteers.opportunities" },
+        },
+      },
 
       //Second Try
     ]);
@@ -205,8 +236,8 @@ exports.getAllRequestsFromVolunteers = async (req, res, next) => {
           "volunteers.opportunities.date": 1,
           "volunteers.opportunities.type": 1,
           "volunteers.opportunities.time": 1,
-          "volunteers.opportunities.requests.received": 1
-        }
+          "volunteers.opportunities.requests.received": 1,
+        },
       },
 
       // Unwind Againg
@@ -223,16 +254,16 @@ exports.getAllRequestsFromVolunteers = async (req, res, next) => {
           type: "$volunteers.opportunities.type",
           start_time: "$volunteers.opportunities.time.start",
           end_time: "$volunteers.opportunities.time.end",
-          volunteer_email: "$volunteers.opportunities.requests.received"
-        }
+          volunteer_email: "$volunteers.opportunities.requests.received",
+        },
       },
       {
         $lookup: {
           from: "users",
           localField: "volunteer_email",
           foreignField: "email",
-          as: "user_docs"
-        }
+          as: "user_docs",
+        },
       },
       {
         $project: {
@@ -246,9 +277,9 @@ exports.getAllRequestsFromVolunteers = async (req, res, next) => {
           start_time: 1,
           end_time: 1,
           volunteer_email: 1,
-          volunteer_name: { $arrayElemAt: ["$user_docs.name", 0] }
-        }
-      }
+          volunteer_name: { $arrayElemAt: ["$user_docs.name", 0] },
+        },
+      },
     ]);
     console.log("Sending all requests!");
     res.json(allRequestsFromVolunteers);
@@ -263,7 +294,7 @@ exports.requestUserToVolunteerForTask = async (req, res, next) => {
     const { userID, taskID, email } = req.params;
 
     // Find User with the UserID
-    await User.findOne({ email: email }, async function(err, user) {
+    await User.findOne({ email: email }, async function (err, user) {
       if (err) {
         console.log("Error:", err);
       }
@@ -273,7 +304,7 @@ exports.requestUserToVolunteerForTask = async (req, res, next) => {
         // Find Relief Center that has the task with taskID
         await ReliefCenter.findOne(
           { "volunteers.opportunities._id": taskID },
-          async function(err, reliefCenter) {
+          async function (err, reliefCenter) {
             if (err) next(err);
 
             // If Relief Center is found..
@@ -296,7 +327,7 @@ exports.requestUserToVolunteerForTask = async (req, res, next) => {
             } else {
               res.status(httpStatus.NOT_FOUND);
               res.json({
-                message: "Requested task was not found in any Relief Center!"
+                message: "Requested task was not found in any Relief Center!",
               });
             }
           }
@@ -327,8 +358,8 @@ exports.getAllOpportunities = async (req, res, next) => {
           from: "volunteeringtypes",
           localField: "volunteers.opportunities.type",
           foreignField: "name",
-          as: "volunteeringtype"
-        }
+          as: "volunteeringtype",
+        },
       },
       // Only pass on the following fields
       {
@@ -337,7 +368,7 @@ exports.getAllOpportunities = async (req, res, next) => {
           location: 1,
           description: 1,
           task_picture_url: {
-            $arrayElemAt: ["$volunteeringtype.image_url", 0]
+            $arrayElemAt: ["$volunteeringtype.image_url", 0],
           },
           picture_url: 1,
           opportunity_id: "$volunteers.opportunities._id",
@@ -347,8 +378,8 @@ exports.getAllOpportunities = async (req, res, next) => {
           opportunity_time: "$volunteers.opportunities.time",
           opportunity_required: "$volunteers.opportunities.required",
           opportunity_assigned: "$volunteers.opportunities.assigned",
-          opportunity_requested: "$volunteers.opportunities.requests.received"
-        }
+          opportunity_requested: "$volunteers.opportunities.requests.received",
+        },
       },
       // Only return those which have True Dates
       {
@@ -356,13 +387,13 @@ exports.getAllOpportunities = async (req, res, next) => {
           $or: [
             {
               opportunity_date: {
-                $gte: new Date(new Date().setHours(0, 0, 0, 0))
-              }
+                $gte: new Date(new Date().setHours(0, 0, 0, 0)),
+              },
             },
-            { opportunity_date: null }
-          ]
-        }
-      }
+            { opportunity_date: null },
+          ],
+        },
+      },
     ]);
     console.log("Sending all requests!");
     res.json(allOpportunties);
@@ -382,8 +413,8 @@ exports.getAssignedOpportunitiesByUserEmail = async (req, res, next) => {
       // Match the ones where the user with 'email' is 'assigned'
       {
         $match: {
-          "volunteers.opportunities.assigned": email
-        }
+          "volunteers.opportunities.assigned": email,
+        },
       },
       // Only pass on the following fields
       {
@@ -394,9 +425,9 @@ exports.getAssignedOpportunitiesByUserEmail = async (req, res, next) => {
           job_id: "$volunteers.opportunities._id",
           job_date: "$volunteers.opportunities.date",
           job_start_time: "$volunteers.opportunities.time.start",
-          job_end_time: "$volunteers.opportunities.time.end"
-        }
-      }
+          job_end_time: "$volunteers.opportunities.time.end",
+        },
+      },
       // Group them in a particular fashion
       // {
       //   $group: {
@@ -426,8 +457,8 @@ exports.getRequestedOpportunitiesByUserEmail = async (req, res, next) => {
       // Match the ones where the user with 'email' has 'request' 'received'
       {
         $match: {
-          "volunteers.opportunities.requests.received": email
-        }
+          "volunteers.opportunities.requests.received": email,
+        },
       },
       // Only pass on the following fields
       {
@@ -437,8 +468,8 @@ exports.getRequestedOpportunitiesByUserEmail = async (req, res, next) => {
           "volunteers.opportunities._id": 1,
           "volunteers.opportunities.date": 1,
           "volunteers.opportunities.type": 1,
-          "volunteers.opportunities.time": 1
-        }
+          "volunteers.opportunities.time": 1,
+        },
       },
       // Group them in a particular fashion
       {
@@ -446,9 +477,9 @@ exports.getRequestedOpportunitiesByUserEmail = async (req, res, next) => {
           _id: "$_id",
           name: { $first: "$name" },
           location: { $first: "$location" },
-          requests: { $push: "$volunteers.opportunities" }
-        }
-      }
+          requests: { $push: "$volunteers.opportunities" },
+        },
+      },
 
       //Second Try
     ]);
@@ -471,8 +502,8 @@ exports.getReceivedOpportunitiesByUserEmail = async (req, res, next) => {
       // Match the ones where the user with 'email' has 'request' 'received'
       {
         $match: {
-          "volunteers.opportunities.requests.sent": email
-        }
+          "volunteers.opportunities.requests.sent": email,
+        },
       },
       // Only pass on the following fields
       {
@@ -483,9 +514,9 @@ exports.getReceivedOpportunitiesByUserEmail = async (req, res, next) => {
           job_id: "$volunteers.opportunities._id",
           job_date: "$volunteers.opportunities.date",
           job_start_time: "$volunteers.opportunities.time.start",
-          job_end_time: "$volunteers.opportunities.time.end"
-        }
-      }
+          job_end_time: "$volunteers.opportunities.time.end",
+        },
+      },
       // DONT COMMENT THE ONES BELOW - You almost banged your head on the wall learning it.. ;-;
       // // Group them in a particular fashion
       // {
@@ -509,7 +540,7 @@ exports.suggestVolunteers = async (req, res, next) => {
   try {
     const users = await User.aggregate([
       { $match: { role: "volunteer" } },
-      { $project: { email: 1, name: 1 } }
+      { $project: { email: 1, name: 1 } },
     ]);
 
     res.send(users);
@@ -524,7 +555,7 @@ exports.suggestVolunteersForTask = async (req, res, next) => {
     // Find Relief Center that has the task with taskID
     await ReliefCenter.findOne(
       { "volunteers.opportunities._id": taskID },
-      async function(err, reliefCenter) {
+      async function (err, reliefCenter) {
         if (err) next(err);
 
         // If Relief Center is found..
@@ -536,11 +567,11 @@ exports.suggestVolunteersForTask = async (req, res, next) => {
           volunteersFoundInTask = [
             ...task.requests.sent,
             ...task.requests.received,
-            ...task.assigned
+            ...task.assigned,
           ];
         } else {
           res.status(httpStatus.NOT_FOUND).json({
-            message: "Requested task was not found in any Relief Center!"
+            message: "Requested task was not found in any Relief Center!",
           });
         }
       }
@@ -565,7 +596,7 @@ exports.suggestVolunteersForReliefCenter = async (req, res, next) => {
     // Find Relief Center that has the task with taskID
     await ReliefCenter.findOne(
       { "volunteers.opportunities._id": taskID },
-      async function(err, reliefCenter) {
+      async function (err, reliefCenter) {
         if (err) next(err);
 
         // If Relief Center is found..
@@ -577,11 +608,11 @@ exports.suggestVolunteersForReliefCenter = async (req, res, next) => {
           volunteersFoundInTask = [
             ...task.requests.sent,
             ...task.requests.received,
-            ...task.assigned
+            ...task.assigned,
           ];
         } else {
           res.status(httpStatus.NOT_FOUND).json({
-            message: "Requested task was not found in any Relief Center!"
+            message: "Requested task was not found in any Relief Center!",
           });
         }
       }
@@ -606,7 +637,7 @@ exports.optOutFromTask = async (req, res, next) => {
     // Find Relief Center that has the task with taskID
     await ReliefCenter.findOne(
       { "volunteers.opportunities._id": taskID },
-      async function(err, reliefCenter) {
+      async function (err, reliefCenter) {
         if (err) next(err);
 
         // If Relief Center is found..
@@ -635,7 +666,7 @@ exports.optOutFromTask = async (req, res, next) => {
               start_time: task.time.start,
               end_time: task.time.end,
               status: "Opted Out",
-              relief_center_id: reliefCenter._id
+              relief_center_id: reliefCenter._id,
             });
 
             // Save the entry into MongoDB
@@ -650,7 +681,7 @@ exports.optOutFromTask = async (req, res, next) => {
           }
         } else {
           res.status(httpStatus.NOT_FOUND).json({
-            message: "Requested task was not found in any Relief Center!"
+            message: "Requested task was not found in any Relief Center!",
           });
         }
       }
@@ -665,7 +696,7 @@ exports.optInToTask = async (req, res, next) => {
     // Find Relief Center that has the task with taskID
     await ReliefCenter.findOne(
       { "volunteers.opportunities._id": taskID },
-      async function(err, reliefCenter) {
+      async function (err, reliefCenter) {
         if (err) next(err);
 
         // If Relief Center is found..
@@ -700,7 +731,7 @@ exports.optInToTask = async (req, res, next) => {
               start_time: task.time.start,
               end_time: task.time.end,
               status: "Opted In",
-              relief_center_id: reliefCenter._id
+              relief_center_id: reliefCenter._id,
             });
 
             // Save the entry into MongoDB
@@ -715,7 +746,7 @@ exports.optInToTask = async (req, res, next) => {
           }
         } else {
           res.status(httpStatus.NOT_FOUND).json({
-            message: "Requested task was not found in any Relief Center!"
+            message: "Requested task was not found in any Relief Center!",
           });
         }
       }
@@ -730,7 +761,7 @@ exports.declineTask = async (req, res, next) => {
     // Find Relief Center that has the task with taskID
     await ReliefCenter.findOne(
       { "volunteers.opportunities._id": taskID },
-      async function(err, reliefCenter) {
+      async function (err, reliefCenter) {
         if (err) next(err);
 
         // If Relief Center is found..
@@ -761,7 +792,7 @@ exports.declineTask = async (req, res, next) => {
               start_time: task.time.start,
               end_time: task.time.end,
               status: "Volunteer Declined",
-              relief_center_id: reliefCenter._id
+              relief_center_id: reliefCenter._id,
             });
 
             // Save the entry into MongoDB
@@ -776,7 +807,7 @@ exports.declineTask = async (req, res, next) => {
           }
         } else {
           res.status(httpStatus.NOT_FOUND).json({
-            message: "Requested task was not found in any Relief Center!"
+            message: "Requested task was not found in any Relief Center!",
           });
         }
       }

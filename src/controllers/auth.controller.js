@@ -13,8 +13,11 @@ const httpStatus = require("http-status");
 // JWT
 const jwt = require("jsonwebtoken");
 
+// Axios
+const axios = require("axios");
+
 // Generate Token Function
-const generateAccessToken = data =>
+const generateAccessToken = (data) =>
   jwt.sign(data, process.env.ACCESS_TOKEN_SECRET);
 
 exports.authenticateToken = (req, res, next) => {
@@ -76,6 +79,7 @@ exports.generateAccessTokenWithRefreshToken = async (req, res) => {
   res.sendStatus(403);
 };
 
+// No longer used
 exports.login = async (req, res) => {
   // Get Email & Password from Request
   const { email, password } = req.body;
@@ -104,7 +108,7 @@ exports.login = async (req, res) => {
       // Save the refresh token in the Token collection along with the user's Email
       const newToken = new Token({
         token: refreshToken,
-        email: email
+        email: email,
       });
 
       const refreshTokenInDB = await newToken.save();
@@ -113,12 +117,111 @@ exports.login = async (req, res) => {
         res.status(200).json({
           accessToken: accessToken,
           refreshToken: refreshTokenInDB.token,
-          message: "Successfully signed in!"
+          message: "Successfully signed in!",
         });
     }
   } catch (error) {
     res
       .status(500)
       .send({ message: "Sorry, something went wrong", error: error });
+  }
+};
+
+exports.verifyGoogleAccessToken = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    axios
+      .get("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((response) => response.data)
+      .then(async (googleUserInfo) => {
+        // Find the user email in DB
+        const user = await User.findOne({ email: googleUserInfo.email }).select(
+          "-password"
+        );
+
+        // If found, send the data (+ Access Token + Refresh Token)
+        if (user) {
+          const { name, role } = user;
+
+          // Generate Access token
+          const newAccessToken = generateAccessToken({
+            iss: "outreach",
+            name: name,
+            admin: role == "admin",
+          });
+
+          res.send({
+            address: user.address,
+            availability: user.availability,
+            type: user.type,
+            profile_picture_url: user.profile_picture_url,
+            preferences: user.preferences,
+            role: user.role,
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            contact_number: user.contact_number,
+            accessToken: newAccessToken,
+          });
+        } else {
+          // If not found..
+          res.send({ userExists: false, message: "User Not Found" });
+        }
+      })
+      .catch((err) =>
+        res.status(403).send({ message: "Invalid Google Access Token" })
+      );
+  } catch (error) {
+    // res.send(error);
+  }
+};
+
+exports.verifyFacebookAccessToken = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    // Get ID, Name, and Email!
+    const meResponse = await axios.get(
+      `https://graph.facebook.com/me?fields=id,name,email&access_token=${token}`
+    );
+
+    // Find the user email in DB
+    const user = await User.findOne({ email: meResponse.data.email }).select(
+      "-password"
+    );
+
+    // If found, send the data (+ Access Token + Refresh Token)
+    if (user) {
+      const { name, role } = user;
+
+      // Generate Access token
+      const newAccessToken = generateAccessToken({
+        iss: "outreach",
+        name: name,
+        admin: role == "admin",
+      });
+
+      res.send({
+        address: user.address,
+        availability: user.availability,
+        type: user.type,
+        profile_picture_url: user.profile_picture_url,
+        preferences: user.preferences,
+        role: user.role,
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        contact_number: user.contact_number,
+        accessToken: newAccessToken,
+      });
+    } else {
+      // If not found..
+      res.send({ userExists: false, message: "User Not Found" });
+    }
+  } catch (error) {
+    res.status(403).send({ message: "Invalid Facebook Access Token" });
   }
 };

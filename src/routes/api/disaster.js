@@ -15,18 +15,10 @@ const authController = require("../../controllers/auth.controller");
 // Routes for Disasters
 
 // Get all Disasters
-router.get(
-  "/",
-  // authController.authenticateToken,
-  disasterController.getAllDisasters
-);
+router.get("/", disasterController.getAllDisasters);
 
 // Create New Disaster - Check if it exists based on it's name
-router.post(
-  "/create",
-
-  disasterController.createDisaster
-);
+router.post("/create", disasterController.createDisaster);
 
 router.get("/id/:id", disasterController.getDisasterByID); // Get a Disaster based on it's ID
 router.get("/:name", disasterController.getDisasterByName); // Get a Disaster based on it's name
