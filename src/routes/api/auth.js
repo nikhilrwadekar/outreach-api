@@ -70,6 +70,7 @@ router.post("/login", passport.authenticate("local"), async function (
         availability: user.availability,
         type: user.type,
         profile_picture_url: user.profile_picture_url,
+        preferences: user.preferences,
         role: user.role,
         _id: user._id,
         name: user.name,
